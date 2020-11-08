@@ -16,8 +16,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// 根目录
+// 本地根目录
 const HOMEDIR = "/Users/ningto/project/gonetdisk/home"
+
+// URL路径
 const HOMEURL = "/home"
 
 type Nav struct {
@@ -149,10 +151,6 @@ func ParseNavList(navpath string) []Nav {
 		}
 	}
 	return result
-}
-
-func FormatSize(size int64) string {
-	return fmt.Sprintf("%v KB", size)
 }
 
 func main() {
