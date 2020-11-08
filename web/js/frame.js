@@ -117,3 +117,51 @@ $('#move').click(function () {
   })
 
 updateButtonsStatus()
+
+function getUrlParams() {
+    const result = {}
+    let url = window.location.href
+    const pos = url.indexOf("?")
+    if (pos === -1) {
+      return result
+    }
+    const params = url.slice(pos + 1)
+    const ls = params.split("&")
+    for (const item of ls) {
+      const keyvalue = item.split("=")
+      if (keyvalue.length == 2) {
+        if (keyvalue[0] === "s") {
+          result["type"] = keyvalue[1]
+        } else if (keyvalue[0] === "o") {
+          result["order"] = keyvalue[1]
+        }
+      }
+    }
+    return result
+  }
+
+  (function updateOrderStatus() {
+    const params = getUrlParams()
+    if (params.type && params.order) {
+      const showName = params.type + " " + (params.order==="asc" ? "↑" : "↓")
+      $(`thead .table-${params.type}-item`).html(showName[0].toUpperCase() + showName.substr(1))
+    }
+  })()
+
+  $('thead .table-header-item label').click(function() {
+    let url = window.location.href
+
+    let type = $(this).html().trim().toLowerCase().split(" ")[0]
+    let order = "desc"
+    const params = getUrlParams()
+    if (params.order && params.order.length) {
+      order = (params.order === "desc" ? "asc" : "desc")
+    }
+
+    const pos = window.location.href.indexOf("?")
+    if (pos === -1) {
+      window.location.href = window.location.href + `?s=${type}&o=${order}`
+    } else {
+      window.location.href = window.location.href.substr(0, pos) + `?s=${type}&o=${order}`
+    }
+  })

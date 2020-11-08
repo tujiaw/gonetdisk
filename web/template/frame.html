@@ -80,9 +80,10 @@
       <thead class="thead-light">
         <tr>
           <th><input type="checkbox" class="select-all" /></th>
-          <th scope="col">名称<i class="fa fa-fw fa-sort"></i></th>
-          <th style="width: 120px;" scope="col">大小<i class="fa fa-fw fa-sort"></i></th>
-          <th style="width: 200px;" scope="col">日期<i class="fa fa-fw fa-sort"></i></th>
+          <th class="table-header-item header-type" scope="col"><label>Type</label><i class="fa fa-fw fa-sort"></i></th>
+          <th class="table-header-item header-name" scope="col"><label>Name</label><i class="fa fa-fw fa-sort"></i></th>
+          <th class="table-header-item header-size" scope="col"><label>Size</label><i class="fa fa-fw fa-sort-desc"></i></th>
+          <th class="table-header-item header-date" scope="col"><label>Time</label><i class="fa fa-fw fa-sort-desc"></i></th>
         </tr>
       </thead>
       <tbody>
@@ -90,11 +91,13 @@
         <tr class="file-row">
           <td style="width:30px;"><input type="checkbox" class="select" name="imgVo" value="{{ .Name }}" /></td>
           {{ if .IsDir }}
-          <td><i class="fa fa-folder"></i> <a href="{{ .Href }}">{{ .Name }}</a></td>
-          <td>--</td>
+            <td class="table-body-type"><i class="fa fa-folder"></i></td>
+            <td><a href="{{ .Href }}">{{ .Name }}</a></td>
+            <td style="text-align: left;">--</td>
           {{ else }}
-          <td><i class="fa fa-file"></i> <a href="{{ .Href }}">{{ .Name }}</a></td>
-          <td>{{ .Size }}</td>
+            <td class="table-body-type"><i class="fa fa-file"></i></td>
+            <td><a href="{{ .Href }}">{{ .Name }}</a></td>
+            <td style="text-align: left;">{{ .Size }}</td>
           {{ end }}
           <td>{{ .ModTime }}</td>
         </tr>
