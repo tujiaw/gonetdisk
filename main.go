@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -88,21 +87,19 @@ func ReadDir(dir string, root string) []Item {
 
 func GetLocalPath(url string) string {
 	if !strings.HasPrefix(url, HOMEURL) {
-		return ""
+		return path.Join(HOMEDIR, url)
 	}
 	return HOMEDIR + url[len(HOMEURL):]
 }
 
 func GetCurrentPath(c *gin.Context) (string, error) {
-	u, err := url.Parse(c.Request.Referer())
+	referer := c.Request.Referer()
+	urlInfo, err := url.Parse(referer)
 	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
 		return "", err
 	}
-	curPath := GetLocalPath(u.Path)
-	if len(curPath) == 0 {
-		return "", errors.New("path is empty")
-	}
-	return curPath, nil
+	return urlInfo.Path, nil
 }
 
 func GetUniquePath(pathstr string) string {
@@ -215,13 +212,11 @@ func main() {
 	})
 
 	app.POST("/new", func(c *gin.Context) {
-		referer := c.Request.Referer()
-		urlInfo, err := url.Parse(referer)
+		curPath, err := GetCurrentPath(c)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
 			return
 		}
-		fmt.Println(urlInfo.Path)
+
 		name := c.PostForm("name")
 		fmt.Println("new name:", name)
 		name = strings.TrimSpace(name)
@@ -230,21 +225,19 @@ func main() {
 			return
 		}
 
-		newPath := path.Join(GetLocalPath(urlInfo.Path), name)
+		newPath := path.Join(GetLocalPath(curPath), name)
 		fmt.Println("new folder:", newPath)
 		if err := os.MkdirAll(newPath, os.ModePerm); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 			return
 		}
-		fmt.Println("redirect:", urlInfo.Path)
-		c.Redirect(http.StatusFound, urlInfo.Path)
+		fmt.Println("redirect:", curPath)
+		c.Redirect(http.StatusFound, curPath)
 	})
 
 	app.POST("upload", func(c *gin.Context) {
-		referer := c.Request.Referer()
-		urlInfo, err := url.Parse(referer)
+		curPath, err := GetCurrentPath(c)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
 			return
 		}
 
@@ -256,7 +249,7 @@ func main() {
 		}
 
 		files := form.File["files"]
-		dst := GetLocalPath(urlInfo.Path)
+		dst := GetLocalPath(curPath)
 		for _, file := range files {
 			dstFile := path.Join(dst, file.Filename)
 			dstFile = GetUniquePath(dstFile)
@@ -264,7 +257,40 @@ func main() {
 				log.Fatal("save error, name:", file.Filename, ", err:", err)
 			}
 		}
-		c.Redirect(http.StatusFound, urlInfo.Path)
+		c.Redirect(http.StatusFound, curPath)
+	})
+
+	app.POST("/move", func(c *gin.Context) {
+		curpath, err := GetCurrentPath(c)
+		if err != nil {
+			return
+		}
+
+		frompath := strings.TrimSpace(c.PostForm("frompath"))
+		dstpath := c.PostForm("name")
+		if len(frompath) == 0 || len(dstpath) == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"err": "from path is empty"})
+			return
+		}
+
+		dstpath = GetLocalPath(dstpath)
+		dstdir := filepath.Dir(dstpath)
+		if !PathExists(dstdir) {
+			if err := os.MkdirAll(dstdir, os.ModePerm); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+				return
+			}
+		}
+
+		frompath = GetLocalPath(frompath)
+		fmt.Println("from path:", frompath)
+		fmt.Println("dst path:", dstpath)
+		if err := os.Rename(frompath, dstpath); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+			return
+		}
+
+		c.Redirect(http.StatusFound, curpath)
 	})
 
 	if err := app.Run(":8080"); err != nil {

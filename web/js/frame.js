@@ -85,13 +85,14 @@ $('#delete').click(function () {
 })
 
 $('#move').click(function () {
-    let frompath = $('.frompath').val()
-    $('#moveInput').val(frompath.replace(/\\/g, '/'))
+    let currentdir = window.location.pathname
+    $('.frompath').val(getSelectFiles()[0])
+    $('#moveInput').val(getSelectFiles()[0])
     return true
   })
 
   $('#rename').click(function () {
-    let name = $('.frompath').val()
+    let name = window.location.pathname
     let start = (name.lastIndexOf('\\') >= 0 ? name.lastIndexOf('\\') : name.lastIndexOf('/')) + 1
     $('#renameInput').val(name.substr(start))
     return true
