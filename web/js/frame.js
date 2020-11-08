@@ -82,7 +82,37 @@ $('#delete').click(function () {
     .catch(function (err) {
         alert(err)
     })
-    
 })
+
+$('#move').click(function () {
+    let frompath = $('.frompath').val()
+    $('#moveInput').val(frompath.replace(/\\/g, '/'))
+    return true
+  })
+
+  $('#rename').click(function () {
+    let name = $('.frompath').val()
+    let start = (name.lastIndexOf('\\') >= 0 ? name.lastIndexOf('\\') : name.lastIndexOf('/')) + 1
+    $('#renameInput').val(name.substr(start))
+    return true
+  })
+
+  $('#archive').click(function () {
+    $('#pathlist').val(JSON.stringify(getSelectFiles()))
+    $('#archiveInput').val('files-' + new Date().toISOString().replace(/:/g, '') + '.zip')
+    return true
+  })
+  $('#archiveOk').click(function () {
+    $('#archiveSubmit').click()
+  })
+  $('#moveOk').click(function () {
+    $('#moveSubmit').click()
+  })
+  $('#newOk').click(function () {
+    $('#newSubmit').click()
+  })
+  $('#uploadOk').click(function () {
+    $('#uploadSubmit').click()
+  })
 
 updateButtonsStatus()

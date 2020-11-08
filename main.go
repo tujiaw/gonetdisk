@@ -2,12 +2,15 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -88,12 +91,47 @@ func GetLocalPath(url string) string {
 	return HOMEDIR + url[len(HOMEURL):]
 }
 
+func GetCurrentPath(c *gin.Context) (string, error) {
+	u, err := url.Parse(c.Request.Referer())
+	if err != nil {
+		return "", err
+	}
+	curPath := GetLocalPath(u.Path)
+	if len(curPath) == 0 {
+		return "", errors.New("path is empty")
+	}
+	return curPath, nil
+}
+
+func GetUniquePath(pathstr string) string {
+	for {
+		if !PathExists(pathstr) {
+			return pathstr
+		}
+
+		ext := filepath.Ext(pathstr)
+		pathstr = pathstr[:len(pathstr)-len(ext)] + "_bak" + ext
+	}
+}
+
 func IsDir(path string) bool {
 	s, err := os.Stat(path)
 	if err != nil {
 		return false
 	}
 	return s.IsDir()
+}
+
+func PathExists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
+	log.Fatal("path exist, path:", path, "err:", err)
+	return false
 }
 
 func ParseNavList(navpath string) []Nav {
@@ -119,6 +157,7 @@ func FormatSize(size int64) string {
 
 func main() {
 	app := gin.Default()
+	app.MaxMultipartMemory = 8 << 20 // 8MB
 	app.LoadHTMLGlob("web/template/*")
 	app.Static("/web", "./web")
 	app.GET("/home/*path", func(c *gin.Context) {
@@ -163,14 +202,71 @@ func main() {
 		}
 
 		for _, f := range files {
-			fmt.Println("will delete:", GetLocalPath(f))
-			if err = os.RemoveAll(GetLocalPath(f)); err != nil {
+			localPath := GetLocalPath(f)
+			if escapePath, err := url.QueryUnescape(localPath); err == nil {
+				localPath = escapePath
+			}
+			fmt.Println("will delete:", localPath)
+			if err = os.RemoveAll(localPath); err != nil {
 				log.Fatal("remove file, f:", f, ", err:", err)
 			}
 		}
 		c.JSON(200, gin.H{
 			"err": 0,
 		})
+	})
+
+	app.POST("/new", func(c *gin.Context) {
+		referer := c.Request.Referer()
+		urlInfo, err := url.Parse(referer)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+			return
+		}
+		fmt.Println(urlInfo.Path)
+		name := c.PostForm("name")
+		fmt.Println("new name:", name)
+		name = strings.TrimSpace(name)
+		if len(name) == 0 {
+			c.JSON(http.StatusOK, gin.H{"err": "name is empty"})
+			return
+		}
+
+		newPath := path.Join(GetLocalPath(urlInfo.Path), name)
+		fmt.Println("new folder:", newPath)
+		if err := os.MkdirAll(newPath, os.ModePerm); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+			return
+		}
+		fmt.Println("redirect:", urlInfo.Path)
+		c.Redirect(http.StatusFound, urlInfo.Path)
+	})
+
+	app.POST("upload", func(c *gin.Context) {
+		referer := c.Request.Referer()
+		urlInfo, err := url.Parse(referer)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+			return
+		}
+
+		form, err := c.MultipartForm()
+		if err != nil {
+			log.Fatal("form error", err)
+			c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+			return
+		}
+
+		files := form.File["files"]
+		dst := GetLocalPath(urlInfo.Path)
+		for _, file := range files {
+			dstFile := path.Join(dst, file.Filename)
+			dstFile = GetUniquePath(dstFile)
+			if err := c.SaveUploadedFile(file, dstFile); err != nil {
+				log.Fatal("save error, name:", file.Filename, ", err:", err)
+			}
+		}
+		c.Redirect(http.StatusFound, urlInfo.Path)
 	})
 
 	if err := app.Run(":8080"); err != nil {

@@ -72,8 +72,8 @@
         <button id="delete" type="button" class="btn btn-sm btn-outline-secondary">Delete</button>
       </div>
       <div class="btn-group" role="group" aria-label="Basic example">
-        <button type="button" class="btn btn-sm btn-outline-secondary">Upload File</button>
-        <button type="button" class="btn btn-sm btn-outline-secondary">New Folder</button>
+        <button id="upload" type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal" data-target="#uploadModal">Upload File</button>
+        <button id="new" type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal" data-target="#newModal">New Folder</button>
       </div>
     </div>
     <table class="table border table-hover table-sm">
@@ -102,6 +102,108 @@
       </tbody>
     </table>
   </main>
+
+   <!-- Modal -->
+<div class="modal fade" id="moveModal" tabindex="-1" role="dialog" aria-labelledby="moveModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="moveModalLabel">Move</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form action="/move" method="post" enctype="multipart/form-data">
+          <input class="frompath form-control" type="text" name="frompath" style="display:none;">
+          <div class="container row">
+            <input id="moveInput" type="text" class="form-control" name="name">
+            <input id="moveSubmit" type="submit" class="form-control" value="Ok" style="display:none;">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <button id="moveOk" type="button" class="btn btn-primary" data-dismiss="modal">Move</button>
+      </div>
+    </div>
+  </div>
+</div>
+        <!-- Modal -->
+<div class="modal fade" id="archiveModal" tabindex="-1" role="dialog" aria-labelledby="archiveModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="archiveModalLabel">Archive</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form action="/archive" method="post" enctype="multipart/form-data">
+          <p>just a moment...</p>
+          <input id="pathlist" type="text" name="pathlist" class="form-control" style="display:none;">
+          <div class="container row">
+            <input id="archiveInput" type="text" class="form-control" name="name">
+            <input id="archiveSubmit" type="submit" class="form-control" value="Ok" style="display:none;">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <button id="archiveOk" type="button" class="btn btn-primary" data-dismiss="modal">Archive</button>
+      </div>
+    </div>
+  </div>
+</div>
+        <!-- Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1" role="dialog" aria-labelledby="uploadModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="uploadModalLabel">Upload</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form action="/upload" method="post" enctype="multipart/form-data">
+          <input type="file" name="files" class="form-control" multiple>
+          <input id="uploadSubmit" type="submit" value="Upload" style="display:none;">
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <button id="uploadOk" type="button" class="btn btn-primary" data-dismiss="modal">Upload</button>
+      </div>
+    </div>
+  </div>
+</div>
+        <!-- Modal -->
+<div class="modal fade" id="newModal" tabindex="-1" role="dialog" aria-labelledby="newModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="newModalLabel">New Folder</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form action="/new" method="post" enctype="multipart/form-data">
+          <div class="container row">
+            <input type="text" class="form-control" name="name">
+            <input id="newSubmit" type="submit" class="form-control" value="Ok" style="display:none;">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <button id="newOk" type="button" class="btn btn-primary" data-dismiss="modal">New</button>
+      </div>
+    </div>
+  </div>
+</div>
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"
     integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
     crossorigin="anonymous"></script>
