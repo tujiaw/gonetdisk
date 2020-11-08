@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -13,7 +14,8 @@ import (
 )
 
 // 根目录
-const HOMEDIR = "/Users/ningto/project/gonetdisk"
+const HOMEDIR = "/Users/ningto/project/gonetdisk/home"
+const HOMEURL = "/home"
 
 type Nav struct {
 	Name   string
@@ -79,6 +81,13 @@ func ReadDir(dir string, root string) []Item {
 	return result
 }
 
+func GetLocalPath(url string) string {
+	if !strings.HasPrefix(url, HOMEURL) {
+		return ""
+	}
+	return HOMEDIR + url[len(HOMEURL):]
+}
+
 func IsDir(path string) bool {
 	s, err := os.Stat(path)
 	if err != nil {
@@ -117,7 +126,7 @@ func main() {
 		absolutePath := path.Join(HOMEDIR, c.Param("path"))
 		fmt.Println("relative path:", relativePath)
 		if IsDir(absolutePath) {
-			navPath := path.Join("/home", relativePath)
+			navPath := path.Join(HOMEURL, relativePath)
 			itemList := ReadDir(absolutePath, navPath)
 			navList := ParseNavList(navPath)
 			c.HTML(http.StatusOK, "frame.html", gin.H{
@@ -132,6 +141,36 @@ func main() {
 		fmt.Println("absolute path:", absolutePath)
 		fmt.Println("base:", path.Base(absolutePath))
 		c.FileAttachment(absolutePath, path.Base(absolutePath))
+	})
+
+	app.POST("/delete", func(c *gin.Context) {
+		fmt.Println("delete")
+		b, err := ioutil.ReadAll(c.Request.Body)
+		if err != nil {
+			c.JSON(500, gin.H{
+				"err": err.Error(),
+			})
+			return
+		}
+
+		var files []string
+		err = json.Unmarshal(b, &files)
+		if err != nil {
+			c.JSON(500, gin.H{
+				"err": err.Error(),
+			})
+			return
+		}
+
+		for _, f := range files {
+			fmt.Println("will delete:", GetLocalPath(f))
+			if err = os.RemoveAll(GetLocalPath(f)); err != nil {
+				log.Fatal("remove file, f:", f, ", err:", err)
+			}
+		}
+		c.JSON(200, gin.H{
+			"err": 0,
+		})
 	})
 
 	if err := app.Run(":8080"); err != nil {
