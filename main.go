@@ -426,12 +426,17 @@ func main() {
 		}
 		fmt.Println("path list:", pathlist)
 
+		var zipdir string
 		var paramsList []string
 		for _, pathstr := range pathlist {
 			if escapePath, err := url.QueryUnescape(pathstr); err == nil {
 				localpath := GetLocalPath(escapePath)
 				if PathExists(localpath) {
-					paramsList = append(paramsList, "\""+localpath+"\"")
+					name := filepath.Base(localpath)
+					if len(zipdir) == 0 {
+						zipdir = filepath.Dir(localpath)
+					}
+					paramsList = append(paramsList, "\""+name+"\"")
 				}
 			}
 		}
@@ -442,8 +447,10 @@ func main() {
 			return
 		}
 
-		zippath := path.Join(ARCHIVEDIR, name+uniqueName)
-		cmd := exec.Command("zip", zippath, strings.Join(paramsList, " "))
+		zippath := path.Join(ARCHIVEDIR, uniqueName+"_"+name)
+		cmdstr := fmt.Sprintf("cd %s && zip -r %s %s", zipdir, zippath, strings.Join(paramsList, " "))
+		fmt.Println("cmd str:", cmdstr)
+		cmd := exec.Command("/bin/bash", "-c", cmdstr)
 		if cmd == nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"err": "cmd is error"})
 			return
