@@ -35,7 +35,11 @@ function getSelectFiles() {
     let selectFiles = []
     $('.file-row').each(function () {
         if ($(this).find('input').is(':checked')) {
-            selectFiles.push($(this).find('a').attr('href'))
+            let href = $(this).find('a').attr('href')
+            if (href.indexOf("?") >= 0) {
+              href = href.substr(0, href.indexOf("?"))
+            }
+            selectFiles.push(href)
         }
     })
     return selectFiles
