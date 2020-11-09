@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -8,15 +9,18 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
 // 本地根目录
-const HOMEDIR = "/Users/ningto/project/gonetdisk/home"
+var HOMEDIR string
+var ARCHIVEDIR string
 
 // URL路径
 const HOMEURL = "/home"
@@ -25,14 +29,6 @@ type Nav struct {
 	Name   string
 	Href   string
 	Active bool
-}
-
-type Item struct {
-	Name    string
-	Href    string
-	IsDir   bool
-	Size    string
-	ModTime string
 }
 
 type ByteSize float64
@@ -61,7 +57,45 @@ func (b ByteSize) Format() string {
 	}
 }
 
-func ReadDir(dir string, root string) []Item {
+type Item struct {
+	Type    string
+	Name    string
+	Href    string
+	IsDir   bool
+	BSize   ByteSize
+	Size    string
+	ModTime string
+}
+
+func Uuidv4() (string, error) {
+	b := make([]byte, 16)
+	_, err := rand.Read(b)
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return "", err
+	}
+	return fmt.Sprintf("%X%X%X%X%X", b[0:4], b[4:6], b[6:8], b[8:10], b[10:]), nil
+}
+
+func GetFileType(pathstr string) string {
+	if IsDir(pathstr) {
+		return "文件夹"
+	}
+
+	ext := filepath.Ext(pathstr)
+	switch ext {
+	case ".exe":
+		return "应用程序"
+	case ".dll":
+		return "应用程序扩展"
+	case ".bat":
+		return "Windows批处理文件"
+	default:
+		return "文件"
+	}
+}
+
+func ReadDir(dir string, root string, query string) []Item {
 	var result []Item
 	fmt.Println("read dir:", dir)
 	fi, err := ioutil.ReadDir(dir)
@@ -71,18 +105,79 @@ func ReadDir(dir string, root string) []Item {
 	}
 	for i := range fi {
 		size := "--"
-		if !fi[i].IsDir() {
-			size = ByteSize(fi[i].Size()).Format()
+		bsize := ByteSize(fi[i].Size())
+		href := path.Join(root, fi[i].Name())
+
+		isDir := fi[i].IsDir()
+		if isDir {
+			if len(query) > 0 {
+				href += "?" + query
+			}
+		} else {
+			size = bsize.Format()
 		}
+
 		result = append(result, Item{
+			Type:    GetFileType(fi[i].Name()),
 			Name:    fi[i].Name(),
-			Href:    path.Join(root, fi[i].Name()),
-			IsDir:   fi[i].IsDir(),
+			Href:    href,
+			IsDir:   isDir,
+			BSize:   bsize,
 			Size:    size,
 			ModTime: fi[i].ModTime().Format("2006-01-02 15:04:05"),
 		})
 	}
 	return result
+}
+
+func SortFiles(files []Item, s string, o string) []Item {
+	if len(s) == 0 {
+		return files
+	}
+
+	var isAsc bool
+	if o == "asc" {
+		isAsc = true
+	} else if o == "desc" {
+		isAsc = false
+	} else {
+		return files
+	}
+
+	if s == "name" {
+		sort.SliceStable(files, func(i, j int) bool {
+			if isAsc {
+				return files[i].Name < files[j].Name
+			} else {
+				return files[i].Name > files[j].Name
+			}
+		})
+	} else if s == "time" {
+		sort.SliceStable(files, func(i, j int) bool {
+			if isAsc {
+				return files[i].ModTime < files[j].ModTime
+			} else {
+				return files[i].ModTime > files[j].ModTime
+			}
+		})
+	} else if s == "type" {
+		sort.SliceStable(files, func(i, j int) bool {
+			if isAsc {
+				return files[i].Type < files[j].Type
+			} else {
+				return files[i].Type > files[j].Type
+			}
+		})
+	} else if s == "size" {
+		sort.SliceStable(files, func(i, j int) bool {
+			if isAsc {
+				return files[i].BSize < files[j].BSize
+			} else {
+				return files[i].BSize > files[j].BSize
+			}
+		})
+	}
+	return files
 }
 
 func GetLocalPath(url string) string {
@@ -133,16 +228,20 @@ func PathExists(path string) bool {
 	return false
 }
 
-func ParseNavList(navpath string) []Nav {
+func ParseNavList(navpath string, query string) []Nav {
 	var result []Nav
 	var href string
 	nameList := strings.Split(navpath, "/")
 	for i, name := range nameList {
 		if len(name) > 0 {
 			href += "/" + name
+			curHref := href
+			if len(query) > 0 {
+				curHref += "?" + query
+			}
 			result = append(result, Nav{
 				Name:   name,
-				Href:   href,
+				Href:   curHref,
 				Active: i == len(nameList)-1,
 			})
 		}
@@ -151,18 +250,38 @@ func ParseNavList(navpath string) []Nav {
 }
 
 func main() {
+	runDir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		panic(err)
+	}
+	HOMEDIR = path.Join(runDir, HOMEURL)
+	if !PathExists(HOMEDIR) {
+		if err := os.MkdirAll(HOMEDIR, os.ModePerm); err != nil {
+			panic(err)
+		}
+	}
+	ARCHIVEDIR = path.Join(runDir, "archive")
+	if !PathExists(ARCHIVEDIR) {
+		if err := os.MkdirAll(ARCHIVEDIR, os.ModePerm); err != nil {
+			panic(err)
+		}
+	}
+
+	fmt.Println("home dir:", HOMEDIR)
 	app := gin.Default()
 	app.MaxMultipartMemory = 8 << 20 // 8MB
 	app.LoadHTMLGlob("web/template/*")
 	app.Static("/web", "./web")
+
 	app.GET("/home/*path", func(c *gin.Context) {
 		relativePath := c.Param("path")
 		absolutePath := path.Join(HOMEDIR, c.Param("path"))
 		fmt.Println("relative path:", relativePath)
 		if IsDir(absolutePath) {
 			navPath := path.Join(HOMEURL, relativePath)
-			itemList := ReadDir(absolutePath, navPath)
-			navList := ParseNavList(navPath)
+			itemList := ReadDir(absolutePath, navPath, c.Request.URL.RawQuery)
+			SortFiles(itemList, c.Query("s"), c.Query("o"))
+			navList := ParseNavList(navPath, c.Request.URL.RawQuery)
 			c.HTML(http.StatusOK, "frame.html", gin.H{
 				"title": relativePath,
 				"dir":   relativePath,
@@ -235,7 +354,7 @@ func main() {
 		c.Redirect(http.StatusFound, curPath)
 	})
 
-	app.POST("upload", func(c *gin.Context) {
+	app.POST("/upload", func(c *gin.Context) {
 		curPath, err := GetCurrentPath(c)
 		if err != nil {
 			return
@@ -291,6 +410,52 @@ func main() {
 		}
 
 		c.Redirect(http.StatusFound, curpath)
+	})
+
+	app.POST("/archive", func(c *gin.Context) {
+		name := c.PostForm("name")
+		if len(name) == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"err": "name is empty!"})
+			return
+		}
+
+		var pathlist []string
+		if err := json.Unmarshal([]byte(c.PostForm("pathlist")), &pathlist); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+			return
+		}
+		fmt.Println("path list:", pathlist)
+
+		var paramsList []string
+		for _, pathstr := range pathlist {
+			if escapePath, err := url.QueryUnescape(pathstr); err == nil {
+				localpath := GetLocalPath(escapePath)
+				if PathExists(localpath) {
+					paramsList = append(paramsList, "\""+localpath+"\"")
+				}
+			}
+		}
+
+		uniqueName, err := Uuidv4()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"err": "uuid error"})
+			return
+		}
+
+		zippath := path.Join(ARCHIVEDIR, name+uniqueName)
+		cmd := exec.Command("zip", zippath, strings.Join(paramsList, " "))
+		if cmd == nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"err": "cmd is error"})
+			return
+		}
+
+		err = cmd.Run()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+			return
+		}
+
+		c.FileAttachment(zippath, name)
 	})
 
 	if err := app.Run(":8080"); err != nil {

@@ -1,4 +1,5 @@
 
+
 function updateButtonsStatus() {
     console.log('update buttons status')
     let fileCount = 0;
@@ -143,8 +144,10 @@ function getUrlParams() {
   (function updateOrderStatus() {
     const params = getUrlParams()
     if (params.type && params.order) {
-      const showName = params.type + " " + (params.order==="asc" ? "↑" : "↓")
-      $(`thead .table-${params.type}-item`).html(showName[0].toUpperCase() + showName.substr(1))
+      const faSort = params.order==="asc" ? "fa-sort-asc" : "fa-sort-desc"
+      const tag = $(`thead .table-header-${params.type} i`)
+      tag.removeClass("fa-sort fa-sort-desc fa-sort-asc")
+      tag.addClass(faSort)
     }
   })()
 

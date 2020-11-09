@@ -65,45 +65,45 @@
 
   <main role="main" class="container">
     <div class="d-flex justify-content-between mb-1">
-      <div class="btn-group" role="group" aria-label="Basic example">
+      <div class="btn-group" role="group">
         <button id="download" type="button" class="btn btn-sm btn-outline-secondary">Download</button>
         <button id="archive" type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal" data-target="#archiveModal">Archive</button>
         <button id="move" type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal" data-target="#moveModal">Move</button>
         <button id="delete" type="button" class="btn btn-sm btn-outline-secondary">Delete</button>
       </div>
-      <div class="btn-group" role="group" aria-label="Basic example">
+      <div class="btn-group" role="group">
         <button id="upload" type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal" data-target="#uploadModal">Upload File</button>
         <button id="new" type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal" data-target="#newModal">New Folder</button>
       </div>
     </div>
-    <table class="table border table-hover table-sm">
-      <thead class="thead-light">
-        <tr>
-          <th><input type="checkbox" class="select-all" /></th>
-          <th class="table-header-item header-type" scope="col"><label>Type</label><i class="fa fa-fw fa-sort"></i></th>
-          <th class="table-header-item header-name" scope="col"><label>Name</label><i class="fa fa-fw fa-sort"></i></th>
-          <th class="table-header-item header-size" scope="col"><label>Size</label><i class="fa fa-fw fa-sort-desc"></i></th>
-          <th class="table-header-item header-date" scope="col"><label>Time</label><i class="fa fa-fw fa-sort-desc"></i></th>
-        </tr>
-      </thead>
-      <tbody>
-        {{ range .list }}
-        <tr class="file-row">
-          <td style="width:30px;"><input type="checkbox" class="select" name="imgVo" value="{{ .Name }}" /></td>
-          {{ if .IsDir }}
-            <td class="table-body-type"><i class="fa fa-folder"></i></td>
-            <td><a href="{{ .Href }}">{{ .Name }}</a></td>
-            <td style="text-align: left;">--</td>
-          {{ else }}
-            <td class="table-body-type"><i class="fa fa-file"></i></td>
-            <td><a href="{{ .Href }}">{{ .Name }}</a></td>
+    <div class="table-fix-head">
+      <table class="table border table-hover table-md">
+        <thead class="thead-light">
+          <tr>
+            <th><input type="checkbox" class="select-all" /></th>
+            <th class="table-header-item table-header-name" scope="col"><label>Name</label><i class="fa fa-fw fa-sort"></i></th>
+            <th class="table-header-item table-header-time" scope="col"><label>Time</label><i class="fa fa-fw fa-sort"></i></th>
+            <th class="table-header-item table-header-type" scope="col"><label>Type</label><i class="fa fa-fw fa-sort"></i></th>
+            <th class="table-header-item table-header-size" scope="col"><label>Size</label><i class="fa fa-fw fa-sort"></i></th>
+          </tr>
+        </thead>
+        <tbody>
+          {{ range .list }}
+          <tr class="file-row">
+            <td style="width:30px;"><input type="checkbox" class="select" name="imgVo" value="{{ .Name }}" /></td>
+            {{ if .IsDir }}
+              <td><i class="fa fa-folder"></i><a href="{{ .Href }}"> {{ .Name }}</a></td>
+            {{ else }}
+              <td><i class="fa fa-file"></i><a href="{{ .Href }}"> {{ .Name }}</a></td>
+            {{ end }}
+            <td>{{ .ModTime }}</td>
+            <td>{{ .Type }}</td>
             <td style="text-align: left;">{{ .Size }}</td>
+          </tr>
           {{ end }}
-          <td>{{ .ModTime }}</td>
-        </tr>
-        {{ end }}
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+    </div>
   </main>
 
    <!-- Modal -->
