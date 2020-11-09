@@ -86,10 +86,10 @@ func GetFileType(pathstr string) string {
 	switch ext {
 	case ".exe":
 		return "应用程序"
-	case ".dll":
-		return "应用程序扩展"
-	case ".bat":
-		return "Windows批处理文件"
+	case ".dll", ".so":
+		return "动态库"
+	case ".bat", ".sh":
+		return "脚本"
 	default:
 		return "文件"
 	}
