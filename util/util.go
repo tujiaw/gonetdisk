@@ -3,7 +3,6 @@ package util
 import (
 	"crypto/rand"
 	"fmt"
-	"log"
 	"os"
 )
 
@@ -59,7 +58,7 @@ func PathExists(path string) bool {
 	if os.IsNotExist(err) {
 		return false
 	}
-	log.Fatal("path exist, path:", path, "err:", err)
+	fmt.Println("path exist, path:", path, "err:", err)
 	return false
 }
 

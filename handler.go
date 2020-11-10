@@ -6,7 +6,6 @@ import (
 	"gonetdisk/config"
 	"gonetdisk/util"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -15,8 +14,10 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 )
 
 // 本地根目录
@@ -45,10 +46,8 @@ type Item struct {
 
 func ReadDir(dir string, root string, query string) []Item {
 	var result []Item
-	fmt.Println("read dir:", dir)
 	fi, err := ioutil.ReadDir(dir)
 	if err != nil {
-		log.Fatalln(err)
 		return result
 	}
 	for i := range fi {
@@ -184,6 +183,20 @@ func InitDir(arg0 string) {
 	if err != nil {
 		panic(err)
 	}
+
+	logdir := path.Join(runDir, "log")
+	if !util.PathExists(logdir) {
+		if err := os.MkdirAll(logdir, os.ModePerm); err != nil {
+			panic(err)
+		}
+	}
+
+	logfile, err := os.OpenFile(path.Join(logdir, "logrus.log"), os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		panic(logfile)
+	}
+	log.SetOutput(logfile)
+
 	HOMEDIR = path.Join(runDir, HOMEURL)
 	if !util.PathExists(HOMEDIR) {
 		if err := os.MkdirAll(HOMEDIR, os.ModePerm); err != nil {
@@ -206,20 +219,15 @@ func Alert(title string, message string) map[string]string {
 }
 
 //////////////////////////////////////
-func ErrorHandler() gin.HandlerFunc {
+func LoggerHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		defer func() {
-			if err := recover(); err != nil {
-				// 记录一个错误的日志
-				if e, ok := err.(error); ok {
-					c.JSON(http.StatusInternalServerError, gin.H{"err": e.Error()})
-					return
-				}
-				c.JSON(http.StatusInternalServerError, gin.H{"err": "recover unknown error!"})
-				return
-			}
-		}()
+		startTime := time.Now()
 		c.Next()
+		endTime := time.Now()
+		cost := endTime.Sub(startTime)
+		method := c.Request.Method
+		requrl := c.Request.RequestURI
+		log.Info("url:", requrl, ", method:", method, ", cost:", cost.Milliseconds(), "ms")
 	}
 }
 func HomeHandler(c *gin.Context) {
@@ -230,7 +238,7 @@ func HomeHandler(c *gin.Context) {
 	}
 	urlPath := urlInfo.Path
 	localPath := path.Join(HOMEDIR, urlPath)
-	fmt.Println("urlpath:", urlPath)
+	log.Info("url path:", urlPath)
 	if util.IsDir(localPath) {
 		navPath := path.Join(HOMEURL, urlPath)
 		itemList := ReadDir(localPath, navPath, c.Request.URL.RawQuery)
@@ -255,7 +263,6 @@ func HomeHandler(c *gin.Context) {
 }
 
 func DeleteHandler(c *gin.Context) {
-	fmt.Println("delete")
 	b, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
 		c.JSON(500, gin.H{
@@ -278,9 +285,9 @@ func DeleteHandler(c *gin.Context) {
 		if escapePath, err := url.QueryUnescape(localPath); err == nil {
 			localPath = escapePath
 		}
-		fmt.Println("will delete:", localPath)
+
 		if err = os.RemoveAll(localPath); err != nil {
-			log.Fatal("remove file, f:", f, ", err:", err)
+			log.Error("remove file, name:", f, ", err:", err)
 		}
 	}
 	c.JSON(200, gin.H{
@@ -295,7 +302,6 @@ func NewHandler(c *gin.Context) {
 	}
 
 	name := c.PostForm("name")
-	fmt.Println("new name:", name)
 	name = strings.TrimSpace(name)
 	if len(name) == 0 {
 		c.JSON(http.StatusOK, gin.H{"err": "name is empty"})
@@ -303,12 +309,11 @@ func NewHandler(c *gin.Context) {
 	}
 
 	newPath := path.Join(GetLocalPath(curPath), name)
-	fmt.Println("new folder:", newPath)
 	if err := os.MkdirAll(newPath, os.ModePerm); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 		return
 	}
-	fmt.Println("redirect:", curPath)
+
 	c.Redirect(http.StatusFound, curPath)
 }
 
@@ -320,7 +325,6 @@ func UploadHandler(c *gin.Context) {
 
 	form, err := c.MultipartForm()
 	if err != nil {
-		log.Fatal("form error", err)
 		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
 		return
 	}
@@ -331,7 +335,7 @@ func UploadHandler(c *gin.Context) {
 		dstFile := path.Join(dst, file.Filename)
 		dstFile = GetUniquePath(dstFile)
 		if err := c.SaveUploadedFile(file, dstFile); err != nil {
-			log.Fatal("save error, name:", file.Filename, ", err:", err)
+			log.Error("save file, name:", file.Filename, ", err:", err)
 		}
 	}
 	c.Redirect(http.StatusFound, curPath)
@@ -360,8 +364,7 @@ func MoveHandler(c *gin.Context) {
 	}
 
 	frompath = GetLocalPath(frompath)
-	fmt.Println("from path:", frompath)
-	fmt.Println("dst path:", dstpath)
+	log.Info("remove from:", frompath, ", to:", dstpath)
 	if err := os.Rename(frompath, dstpath); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 		return
@@ -382,7 +385,7 @@ func ArchiveHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
 		return
 	}
-	fmt.Println("path list:", pathlist)
+	log.Info("archive list:", pathlist)
 
 	var zipdir string
 	var paramsList []string
@@ -407,7 +410,7 @@ func ArchiveHandler(c *gin.Context) {
 
 	zippath := path.Join(ARCHIVEDIR, uniqueName+"_"+name)
 	cmdstr := fmt.Sprintf("cd %s && zip -r %s %s", zipdir, zippath, strings.Join(paramsList, " "))
-	fmt.Println("cmd str:", cmdstr)
+	log.Info("shell command:", cmdstr)
 	cmd := exec.Command("/bin/bash", "-c", cmdstr)
 	if cmd == nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"err": "cmd is error"})

@@ -1,14 +1,18 @@
 package main
 
 import (
-	"fmt"
 	"gonetdisk/config"
 	"os"
 	"path"
 	"path/filepath"
 
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 )
+
+func init() {
+
+}
 
 func main() {
 	InitDir(os.Args[0])
@@ -17,12 +21,13 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println("home dir:", HOMEDIR)
+	log.Info("start home dir:", HOMEDIR)
+
 	app := gin.Default()
 	app.LoadHTMLGlob("web/template/*")
 	app.Static("/web", "./web")
 
-	app.Use(ErrorHandler())
+	app.Use(LoggerHandler())
 	app.GET("/home/*path", HomeHandler)
 	app.POST("/delete", DeleteHandler)
 	app.POST("/new", NewHandler)
@@ -30,7 +35,9 @@ func main() {
 	app.POST("/move", MoveHandler)
 	app.POST("/archive", ArchiveHandler)
 
-	if err := app.Run(":8989"); err != nil {
+	const PORT = ":8989"
+	log.Info("app start listen port", PORT)
+	if err := app.Run(PORT); err != nil {
 		panic(err)
 	}
 }
