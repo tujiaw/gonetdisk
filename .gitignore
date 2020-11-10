@@ -3,3 +3,4 @@ home/.DS_Store
 __debug_bin
 gonetdisk
 /home
+log/logrus.log
