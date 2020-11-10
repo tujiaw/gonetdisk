@@ -39,10 +39,6 @@
         </li>
         {{ end }}
       </ul>
-      <form class="form-inline mt-2 mt-md-0" action="/move" method="post" enctype="multipart/form-data">
-        <input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search">
-        <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-      </form>
     </div>
   </nav>
 
@@ -53,6 +49,7 @@
         <button id="archive" type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal" data-target="#archiveModal">Archive</button>
         <button id="move" type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal" data-target="#moveModal">Move</button>
         <button id="delete" type="button" class="btn btn-sm btn-outline-secondary">Delete</button>
+        <input id="filter" style="margin-left:10px; width:100px;" type="text" class="form-control" placeholder="过滤">
       </div>
       <div class="btn-group" role="group">
         <button id="upload" type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal" data-target="#uploadModal">Upload File</button>
@@ -82,7 +79,7 @@
           {{ range .list }}
           <tr class="file-row">
             <td style="width:30px;"><input type="checkbox" class="select" value="{{ .Name }}" /></td>
-            <td><i class="fa fa-fw {{ .Icon }}" isdir="{{ .IsDir }}"></i> <a href="{{ .Href }}">{{ .Name }}</a></td>
+            <td><i class="fa fa-fw {{ .Icon }}" isdir="{{ .IsDir }}"></i> <a class="filename" href="{{ .Href }}">{{ .Name }}</a></td>
             <td>{{ .ModTime }}</td>
             <td>{{ .Type }}</td>
             <td style="text-align: left;">{{ .Size }}</td>

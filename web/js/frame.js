@@ -103,6 +103,19 @@ $('#move').click(function () {
     return true
   })
 
+  $('#filter').bind('input propertychange', function() {
+    var text = $(this).val().toLowerCase();
+    $('.file-row').each(function () {
+      const i = $(this).find('.filename')
+      const filename = i.text().toLowerCase()
+      if (filename.indexOf(text) >= 0) {
+        $(this).show()
+      } else {
+        $(this).hide();
+      }
+  })
+  })
+
   $('#archive').click(function () {
     $('#pathlist').val(JSON.stringify(getSelectFiles()))
     $('#archiveInput').val('files-' + new Date().toISOString().replace(/:/g, '') + '.zip')
