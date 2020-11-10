@@ -198,27 +198,43 @@ func InitDir(arg0 string) {
 	}
 }
 
+func Alert(title string, message string) map[string]string {
+	var mp = make(map[string]string)
+	mp["title"] = title
+	mp["message"] = message
+	return mp
+}
+
 func HomeHandler(c *gin.Context) {
-	relativePath := c.Param("path")
-	absolutePath := path.Join(HOMEDIR, c.Param("path"))
-	fmt.Println("relative path:", relativePath)
-	if util.IsDir(absolutePath) {
-		navPath := path.Join(HOMEURL, relativePath)
-		itemList := ReadDir(absolutePath, navPath, c.Request.URL.RawQuery)
+	urlInfo, err := url.Parse(c.Param("path"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+		return
+	}
+	urlPath := urlInfo.Path
+	localPath := path.Join(HOMEDIR, urlPath)
+	fmt.Println("urlpath:", urlPath)
+	if util.IsDir(localPath) {
+		navPath := path.Join(HOMEURL, urlPath)
+		itemList := ReadDir(localPath, navPath, c.Request.URL.RawQuery)
 		SortFiles(itemList, c.Query("s"), c.Query("o"))
 		navList := ParseNavList(navPath, c.Request.URL.RawQuery)
-		c.HTML(http.StatusOK, "frame.html", gin.H{
-			"title": relativePath,
-			"dir":   relativePath,
+		data := gin.H{
+			"title": urlPath,
+			"dir":   urlPath,
 			"list":  itemList,
 			"nav":   navList,
-		})
+		}
+		c.HTML(http.StatusOK, "frame.html", data)
 		return
 	}
 
-	fmt.Println("absolute path:", absolutePath)
-	fmt.Println("base:", path.Base(absolutePath))
-	c.FileAttachment(absolutePath, path.Base(absolutePath))
+	if !util.PathExists(localPath) {
+		c.JSON(http.StatusBadRequest, gin.H{"err": "not found!"})
+		return
+	}
+
+	c.FileAttachment(localPath, path.Base(localPath))
 }
 
 func DeleteHandler(c *gin.Context) {

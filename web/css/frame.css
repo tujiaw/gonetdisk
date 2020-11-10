@@ -1,3 +1,18 @@
+.bd-placeholder-img {
+  font-size: 1.125rem;
+  text-anchor: middle;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+@media (min-width: 768px) {
+  .bd-placeholder-img-lg {
+    font-size: 3.5rem;
+  }
+}
+
 body { overflow-y: hidden; }
 .table-header-item label { cursor: pointer; margin: 0px;  padding: 0px; }
 .table-header-type { width: 100px; }
@@ -7,3 +22,4 @@ body { overflow-y: hidden; }
 
 .table-fix-head          { overflow-y: auto; height: calc(100vh - 110px); }
 .table-fix-head thead th { position: sticky; top: -1px;}
+.alert { margin-bottom: 0px;}

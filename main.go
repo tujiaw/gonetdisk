@@ -23,13 +23,14 @@ func main() {
 	app.Static("/web", "./web")
 
 	app.GET("/home/*path", HomeHandler)
+
 	app.POST("/delete", DeleteHandler)
 	app.POST("/new", NewHandler)
 	app.POST("/upload", UploadHandler)
 	app.POST("/move", MoveHandler)
 	app.POST("/archive", ArchiveHandler)
 
-	if err := app.Run(":8080"); err != nil {
+	if err := app.Run(":8989"); err != nil {
 		panic(err)
 	}
 }
