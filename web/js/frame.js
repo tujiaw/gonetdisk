@@ -7,10 +7,10 @@ function updateButtonsStatus() {
     $('.file-row').each(function () {
         if ($(this).find('input').is(':checked')) {
             const i = $(this).find('i')
-            if (i.hasClass('fa-file')) {
-                fileCount++;
-            } else if (i.hasClass('fa-folder')) {
-                folderCount++;
+            if (i.attr("isdir") == "true") {
+              folderCount++;
+            } else {
+              fileCount++;
             }
         }
     })

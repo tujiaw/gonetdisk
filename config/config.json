@@ -1,0 +1,40 @@
+{
+  "nameicon" : [
+    { "name" : "目录", "icon" : "fa-folder-o" },
+    { "name": "文件", "icon": "fa-file-o" },
+    { "name": "应用程序", "icon": "fa-file-o" },
+    { "name": "图片", "icon": "fa-file-image-o" },
+    { "name": "压缩文件", "icon": "fa-file-archive-o" },
+    { "name": "PDF文档", "icon": "fa-file-pdf-o" },
+    { "name": "日志", "icon": "fa-file-text-o" },
+    { "name": "文本文件", "icon": "fa-file-text-o" },
+    { "name": "源代码", "icon": "fa-file-code-o" }
+  ],
+  "extname": [
+    { "ext": ".exe", "name": "应用程序" },
+    { "ext": ".dll", "name": "动态库" },
+    { "ext": ".so", "name": "动态库"},
+    { "ext": ".bat", "name": "脚本"},
+    { "ext": ".sh", "name": "脚本"},
+    { "ext": ".log", "name": "日志"},
+    { "ext": ".txt", "name": "文本文件"},
+    { "ext": ".png", "name": "图片"},
+    { "ext": ".jpg", "name": "图片"},
+    { "ext": ".ico", "name": "图标"},
+    { "ext": ".zip", "name": "压缩文件"},
+    { "ext": ".rar", "name": "压缩文件"},
+    { "ext": ".bz2", "name": "压缩文件"},
+    { "ext": ".ini", "name": "配置文件"},
+    { "ext": ".msi", "name": "程序包"},
+    { "ext": ".xml", "name": "XML文件"},
+    { "ext": ".pdf", "name": "PDF文档"},
+    { "ext": ".cpp", "name": "源代码"},
+    { "ext": ".hpp", "name": "源代码"},
+    { "ext": ".h", "name": "源代码"},
+    { "ext": ".go", "name": "源代码"},
+    { "ext": ".js", "name": "源代码"},
+    { "ext": ".html", "name": "源代码"},
+    { "ext": ".css", "name": "源代码"},
+    { "ext": ".java", "name": "源代码"}
+  ]
+}

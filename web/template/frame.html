@@ -90,12 +90,8 @@
         <tbody>
           {{ range .list }}
           <tr class="file-row">
-            <td style="width:30px;"><input type="checkbox" class="select" name="imgVo" value="{{ .Name }}" /></td>
-            {{ if .IsDir }}
-              <td><i class="fa fa-folder"></i><a href="{{ .Href }}"> {{ .Name }}</a></td>
-            {{ else }}
-              <td><i class="fa fa-file"></i><a href="{{ .Href }}"> {{ .Name }}</a></td>
-            {{ end }}
+            <td style="width:30px;"><input type="checkbox" class="select" value="{{ .Name }}" /></td>
+            <td><i class="fa fa-fw {{ .Icon }}" isdir="{{ .IsDir }}"></i> <a href="{{ .Href }}">{{ .Name }}</a></td>
             <td>{{ .ModTime }}</td>
             <td>{{ .Type }}</td>
             <td style="text-align: left;">{{ .Size }}</td>
