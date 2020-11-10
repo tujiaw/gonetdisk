@@ -22,8 +22,8 @@ func main() {
 	app.LoadHTMLGlob("web/template/*")
 	app.Static("/web", "./web")
 
+	app.Use(ErrorHandler())
 	app.GET("/home/*path", HomeHandler)
-
 	app.POST("/delete", DeleteHandler)
 	app.POST("/new", NewHandler)
 	app.POST("/upload", UploadHandler)

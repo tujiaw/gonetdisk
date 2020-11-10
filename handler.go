@@ -205,6 +205,23 @@ func Alert(title string, message string) map[string]string {
 	return mp
 }
 
+//////////////////////////////////////
+func ErrorHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		defer func() {
+			if err := recover(); err != nil {
+				// 记录一个错误的日志
+				if e, ok := err.(error); ok {
+					c.JSON(http.StatusInternalServerError, gin.H{"err": e.Error()})
+					return
+				}
+				c.JSON(http.StatusInternalServerError, gin.H{"err": "recover unknown error!"})
+				return
+			}
+		}()
+		c.Next()
+	}
+}
 func HomeHandler(c *gin.Context) {
 	urlInfo, err := url.Parse(c.Param("path"))
 	if err != nil {
