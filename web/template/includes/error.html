@@ -1,0 +1,11 @@
+{{ define "main" }}
+<main role="main" class="container">
+  <div class="jumbotron">
+    <h1 class="display-4">{{ .title }}</h1>
+    <p class="lead">{{ .message }}</p>
+    <hr class="my-4">
+    <p>Return to the last location</p>
+    <a class="btn btn-primary btn-lg" href="{{ .back }}" role="button">Back</a>
+  </div>
+</main>
+{{ end }}

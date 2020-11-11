@@ -1,0 +1,62 @@
+{{ define "main" }}
+<main role="main" class="container">
+  <div class="d-flex justify-content-between mb-1">
+    <div class="btn-group" role="group">
+      <button id="download" type="button" class="btn btn-sm btn-outline-secondary">Download</button>
+      <button id="archive" type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal"
+        data-target="#archiveModal">Archive</button>
+      <button id="move" type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal"
+        data-target="#moveModal">Move</button>
+      <button id="delete" type="button" class="btn btn-sm btn-outline-secondary">Delete</button>
+      <input id="filter" style="margin-left:10px; width:100px;" type="text" class="form-control" placeholder="Filter">
+    </div>
+    <div class="btn-group" role="group">
+      <button id="upload" type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal"
+        data-target="#uploadModal">Upload File</button>
+      <button id="new" type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal"
+        data-target="#newModal">New Folder</button>
+    </div>
+  </div>
+  {{ if .alert }}
+  <div class="alert alert-warning alert-dismissible fade show" role="alert">
+    <strong>{{ .alert.title }}:</strong> {{ .alert.message }}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  {{ end }}
+  <div class="table-fix-head">
+    <table class="table border table-hover table-md">
+      <thead class="thead-light">
+        <tr>
+          <th><input type="checkbox" class="select-all" /></th>
+          <th class="table-header-item table-header-name" scope="col"><label>Name</label><i
+              class="fa fa-fw fa-sort"></i></th>
+          <th class="table-header-item table-header-time" scope="col"><label>Time</label><i
+              class="fa fa-fw fa-sort"></i></th>
+          <th class="table-header-item table-header-type" scope="col"><label>Type</label><i
+              class="fa fa-fw fa-sort"></i></th>
+          <th class="table-header-item table-header-size" scope="col"><label>Size</label><i
+              class="fa fa-fw fa-sort"></i></th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ range .list }}
+        <tr class="file-row">
+          <td style="width:30px;"><input type="checkbox" class="select" value="{{ .Name }}" /></td>
+          <td><i class="fa fa-fw {{ .Icon }}" isdir="{{ .IsDir }}"></i> <a class="filename"
+              href="{{ .Href }}">{{ .Name }}</a></td>
+          <td>{{ .ModTime }}</td>
+          <td>{{ .Type }}</td>
+          <td style="text-align: left;">{{ .Size }}</td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+  {{ template "move_modal" . }}
+  {{ template "archive_modal" . }}
+  {{ template "upload_modal" . }}
+  {{ template "new_modal" . }}
+</main>
+{{ end }}

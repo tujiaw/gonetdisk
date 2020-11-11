@@ -136,7 +136,7 @@ func GetLocalPath(url string) string {
 	return HOMEDIR + url[len(HOMEURL):]
 }
 
-func GetCurrentPath(c *gin.Context) (string, error) {
+func GetRefererPath(c *gin.Context) (string, error) {
 	referer := c.Request.Referer()
 	urlInfo, err := url.Parse(referer)
 	if err != nil {
@@ -178,12 +178,7 @@ func ParseNavList(navpath string, query string) []Nav {
 	return result
 }
 
-func InitDir(arg0 string) {
-	runDir, err := filepath.Abs(filepath.Dir(arg0))
-	if err != nil {
-		panic(err)
-	}
-
+func InitDir(runDir string) {
 	logdir := path.Join(runDir, "log")
 	if !util.PathExists(logdir) {
 		if err := os.MkdirAll(logdir, os.ModePerm); err != nil {
@@ -213,7 +208,23 @@ func InitDir(arg0 string) {
 }
 
 //////////////////////////////////////
-func LoggerHandler() gin.HandlerFunc {
+
+type Handler struct {
+	app *gin.Engine
+}
+
+func NewHandler(engine *gin.Engine) Handler {
+	return Handler{
+		app: engine,
+	}
+}
+
+func (handler Handler) RedirectContext(location string, c *gin.Context) {
+	c.Request.URL.Path = location
+	handler.app.HandleContext(c)
+}
+
+func (handler Handler) LoggerMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		startTime := time.Now()
 		c.Next()
@@ -224,7 +235,8 @@ func LoggerHandler() gin.HandlerFunc {
 		log.Info("url:", requrl, ", method:", method, ", cost:", cost.Milliseconds(), "ms")
 	}
 }
-func HomeHandler(c *gin.Context) {
+
+func (handler Handler) Home(c *gin.Context) {
 	urlInfo, err := url.Parse(c.Param("path"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
@@ -244,33 +256,48 @@ func HomeHandler(c *gin.Context) {
 			"list":  itemList,
 			"nav":   navList,
 		}
-		c.HTML(http.StatusOK, "frame.html", data)
+		c.HTML(http.StatusOK, "index.html", data)
 		return
 	}
 
 	if !util.PathExists(localPath) {
-		c.JSON(http.StatusBadRequest, gin.H{"err": "not found!"})
+		handler.RedirectContext("/404", c)
 		return
 	}
 
 	c.FileAttachment(localPath, path.Base(localPath))
 }
 
-func DeleteHandler(c *gin.Context) {
+func (handler Handler) ErrorRender(title string, message string, c *gin.Context) {
+	backUrl, err := GetRefererPath(c)
+	if err != nil {
+		title = "Referer Path Error"
+		message = err.Error()
+		backUrl = HOMEURL
+	}
+
+	c.HTML(http.StatusInternalServerError, "error.html", gin.H{
+		"title":   title,
+		"message": message,
+		"back":    backUrl,
+	})
+}
+
+func (handler Handler) NoRoute(c *gin.Context) {
+	c.HTML(http.StatusOK, "404.html", gin.H{})
+}
+
+func (handler Handler) Delete(c *gin.Context) {
 	b, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
-		c.JSON(500, gin.H{
-			"err": err.Error(),
-		})
+		handler.ErrorRender("Error", err.Error(), c)
 		return
 	}
 
 	var files []string
 	err = json.Unmarshal(b, &files)
 	if err != nil {
-		c.JSON(500, gin.H{
-			"err": err.Error(),
-		})
+		handler.ErrorRender("Error", err.Error(), c)
 		return
 	}
 
@@ -284,13 +311,13 @@ func DeleteHandler(c *gin.Context) {
 			log.Error("remove file, name:", f, ", err:", err)
 		}
 	}
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"err": 0,
 	})
 }
 
-func NewHandler(c *gin.Context) {
-	curPath, err := GetCurrentPath(c)
+func (handler Handler) New(c *gin.Context) {
+	curPath, err := GetRefererPath(c)
 	if err != nil {
 		return
 	}
@@ -298,28 +325,28 @@ func NewHandler(c *gin.Context) {
 	name := c.PostForm("name")
 	name = strings.TrimSpace(name)
 	if len(name) == 0 {
-		c.JSON(http.StatusOK, gin.H{"err": "name is empty"})
+		handler.ErrorRender("Warning", "The name cannot be empty!", c)
 		return
 	}
 
 	newPath := path.Join(GetLocalPath(curPath), name)
 	if err := os.MkdirAll(newPath, os.ModePerm); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		handler.ErrorRender("ERROR", err.Error(), c)
 		return
 	}
 
 	c.Redirect(http.StatusFound, curPath)
 }
 
-func UploadHandler(c *gin.Context) {
-	curPath, err := GetCurrentPath(c)
+func (handler Handler) Upload(c *gin.Context) {
+	curPath, err := GetRefererPath(c)
 	if err != nil {
 		return
 	}
 
 	form, err := c.MultipartForm()
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+		handler.ErrorRender("Warning", err.Error(), c)
 		return
 	}
 
@@ -335,8 +362,8 @@ func UploadHandler(c *gin.Context) {
 	c.Redirect(http.StatusFound, curPath)
 }
 
-func MoveHandler(c *gin.Context) {
-	curpath, err := GetCurrentPath(c)
+func (handler Handler) Move(c *gin.Context) {
+	curpath, err := GetRefererPath(c)
 	if err != nil {
 		return
 	}
@@ -344,7 +371,7 @@ func MoveHandler(c *gin.Context) {
 	frompath := strings.TrimSpace(c.PostForm("frompath"))
 	dstpath := c.PostForm("name")
 	if len(frompath) == 0 || len(dstpath) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"err": "from path is empty"})
+		handler.ErrorRender("Warning", "File path cannot be empty!", c)
 		return
 	}
 
@@ -352,7 +379,7 @@ func MoveHandler(c *gin.Context) {
 	dstdir := filepath.Dir(dstpath)
 	if !util.PathExists(dstdir) {
 		if err := os.MkdirAll(dstdir, os.ModePerm); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+			handler.ErrorRender("ERROR", err.Error(), c)
 			return
 		}
 	}
@@ -360,23 +387,23 @@ func MoveHandler(c *gin.Context) {
 	frompath = GetLocalPath(frompath)
 	log.Info("remove from:", frompath, ", to:", dstpath)
 	if err := os.Rename(frompath, dstpath); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		handler.ErrorRender("ERROR", err.Error(), c)
 		return
 	}
 
 	c.Redirect(http.StatusFound, curpath)
 }
 
-func ArchiveHandler(c *gin.Context) {
+func (handler Handler) Archive(c *gin.Context) {
 	name := c.PostForm("name")
 	if len(name) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"err": "name is empty!"})
+		handler.ErrorRender("Warning", "The name cannot be empty!", c)
 		return
 	}
 
 	var pathlist []string
 	if err := json.Unmarshal([]byte(c.PostForm("pathlist")), &pathlist); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+		handler.ErrorRender("ERROR", err.Error(), c)
 		return
 	}
 	log.Info("archive list:", pathlist)
@@ -398,7 +425,7 @@ func ArchiveHandler(c *gin.Context) {
 
 	uniqueName, err := util.Uuidv4()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"err": "uuid error"})
+		handler.ErrorRender("ERROR UUID", err.Error(), c)
 		return
 	}
 
@@ -407,13 +434,13 @@ func ArchiveHandler(c *gin.Context) {
 	log.Info("shell command:", cmdstr)
 	cmd := exec.Command("/bin/bash", "-c", cmdstr)
 	if cmd == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"err": "cmd is error"})
+		handler.ErrorRender("ERROR EXEC SHELL", "Exec command shell failed!", c)
 		return
 	}
 
 	err = cmd.Run()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		handler.ErrorRender("ERROR", err.Error(), c)
 		return
 	}
 

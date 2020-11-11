@@ -3,6 +3,7 @@ module gonetdisk
 go 1.14
 
 require (
+	github.com/gin-contrib/multitemplate v0.0.0-20200916052041-666a7309d230
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-delve/delve v1.5.0 // indirect
 	github.com/go-playground/validator/v10 v10.4.0 // indirect
