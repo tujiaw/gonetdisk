@@ -1,18 +1,18 @@
 Date.prototype.Format = function (fmt) { //author: meizz
   var o = {
-  "M+": this.getMonth() + 1, //月份
-  "d+": this.getDate(), //日
-  "h+": this.getHours(), //小时
-  "m+": this.getMinutes(), //分
-  "s+": this.getSeconds(), //秒
-  "q+": Math.floor((this.getMonth() + 3) / 3), //季度
-  "S": this.getMilliseconds() //毫秒
+    "M+": this.getMonth() + 1, //月份
+    "d+": this.getDate(), //日
+    "h+": this.getHours(), //小时
+    "m+": this.getMinutes(), //分
+    "s+": this.getSeconds(), //秒
+    "q+": Math.floor((this.getMonth() + 3) / 3), //季度
+    "S": this.getMilliseconds() //毫秒
   };
   if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
   for (var k in o)
-  if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+    if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
   return fmt;
-  }
+}
 
 function updateButtonsStatus() {
   console.log("update buttons status");
@@ -99,12 +99,12 @@ $("#delete").click(function () {
   }
   const selectFiles = getSelectFiles();
   fetch("/delete", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(selectFiles),
-  })
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(selectFiles),
+    })
     .then((response) => response.json())
     .then(function (response) {
       if (response.err) {
@@ -132,9 +132,9 @@ $("#move").click(function () {
 $("#rename").click(function () {
   let name = window.location.pathname;
   let start =
-    (name.lastIndexOf("\\") >= 0
-      ? name.lastIndexOf("\\")
-      : name.lastIndexOf("/")) + 1;
+    (name.lastIndexOf("\\") >= 0 ?
+      name.lastIndexOf("\\") :
+      name.lastIndexOf("/")) + 1;
   $("#renameInput").val(name.substr(start));
   return true;
 });
@@ -155,7 +155,7 @@ $("#filter").bind("input propertychange", function () {
 $("#archive").click(function () {
   $("#pathlist").val(JSON.stringify(getSelectFiles()));
   $("#archiveInput").val(
-    "files_ningto_" + new Date().Format("yyyMMdd_HHmmss")+ ".zip"
+    "files_ningto_" + new Date().Format("yyyMMdd_HHmmss") + ".zip"
   );
   return true;
 });

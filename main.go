@@ -25,7 +25,7 @@ func main() {
 		panic(err)
 	}
 
-	log.Info("start home dir:", HOMEDIR)
+	log.Info("start home dir:", HOME_DIR)
 
 	app := gin.Default()
 	handler := NewHandler(app)

@@ -68,3 +68,10 @@ func If(yes bool, left interface{}, right interface{}) interface{} {
 	}
 	return right
 }
+
+func IfBool(yes bool, left bool, right bool) bool {
+	if yes {
+		return left
+	}
+	return right
+}

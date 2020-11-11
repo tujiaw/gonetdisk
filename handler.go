@@ -21,11 +21,11 @@ import (
 )
 
 // 本地根目录
-var HOMEDIR string
-var ARCHIVEDIR string
+var HOME_DIR string
+var ARCHIVE_DIR string
 
 // URL路径
-const HOMEURL = "/home"
+const HOME_URL = "/home"
 
 type Nav struct {
 	Name   string
@@ -33,7 +33,7 @@ type Nav struct {
 	Active bool
 }
 
-type Item struct {
+type RowItem struct {
 	Type    string
 	Icon    string
 	Name    string
@@ -44,16 +44,49 @@ type Item struct {
 	ModTime string
 }
 
-func ReadDir(dir string, root string, query string) []Item {
-	var result []Item
-	fi, err := ioutil.ReadDir(dir)
+func InitDir(runDir string) {
+	logdir := path.Join(runDir, "log")
+	if !util.PathExists(logdir) {
+		if err := os.MkdirAll(logdir, os.ModePerm); err != nil {
+			panic(err)
+		}
+	}
+
+	logfile, err := os.OpenFile(path.Join(logdir, "logrus.log"), os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		panic(logfile)
+	}
+
+	log.SetOutput(logfile)
+
+	HOME_DIR = path.Join(runDir, HOME_URL)
+	if !util.PathExists(HOME_DIR) {
+		if err := os.MkdirAll(HOME_DIR, os.ModePerm); err != nil {
+			panic(err)
+		}
+	}
+	ARCHIVE_DIR = path.Join(runDir, "archive")
+	if !util.PathExists(ARCHIVE_DIR) {
+		if err := os.MkdirAll(ARCHIVE_DIR, os.ModePerm); err != nil {
+			panic(err)
+		}
+	}
+}
+
+func ReadDirFromUrlPath(urlpath string, query string) []RowItem {
+	localDir := path.Join(HOME_DIR, urlpath)
+	fullUrl := path.Join(HOME_URL, urlpath)
+
+	var result []RowItem
+	fi, err := ioutil.ReadDir(localDir)
 	if err != nil {
 		return result
 	}
+
 	for i := range fi {
 		size := "--"
 		bsize := util.ByteSize(fi[i].Size())
-		href := path.Join(root, fi[i].Name())
+		href := path.Join(fullUrl, fi[i].Name())
 
 		isDir := fi[i].IsDir()
 		if isDir {
@@ -64,8 +97,8 @@ func ReadDir(dir string, root string, query string) []Item {
 			size = bsize.Format()
 		}
 
-		name, icon := config.Instance().GetNameAndIcon(path.Join(dir, fi[i].Name()))
-		result = append(result, Item{
+		name, icon := config.Instance().GetNameAndIcon(path.Join(localDir, fi[i].Name()))
+		result = append(result, RowItem{
 			Type:    name,
 			Icon:    icon,
 			Name:    fi[i].Name(),
@@ -79,7 +112,7 @@ func ReadDir(dir string, root string, query string) []Item {
 	return result
 }
 
-func SortFiles(files []Item, s string, o string) []Item {
+func SortFiles(files []RowItem, s string, o string) []RowItem {
 	if len(s) == 0 {
 		return files
 	}
@@ -93,29 +126,24 @@ func SortFiles(files []Item, s string, o string) []Item {
 		return files
 	}
 
+	lessString := func(cond bool, left string, right string) bool {
+		if cond {
+			return left < right
+		}
+		return left > right
+	}
+
 	if s == "name" {
 		sort.SliceStable(files, func(i, j int) bool {
-			if isAsc {
-				return files[i].Name < files[j].Name
-			} else {
-				return files[i].Name > files[j].Name
-			}
+			return lessString(isAsc, files[i].Name, files[j].Name)
 		})
 	} else if s == "time" {
 		sort.SliceStable(files, func(i, j int) bool {
-			if isAsc {
-				return files[i].ModTime < files[j].ModTime
-			} else {
-				return files[i].ModTime > files[j].ModTime
-			}
+			return lessString(isAsc, files[i].ModTime, files[j].ModTime)
 		})
 	} else if s == "type" {
 		sort.SliceStable(files, func(i, j int) bool {
-			if isAsc {
-				return files[i].Type < files[j].Type
-			} else {
-				return files[i].Type > files[j].Type
-			}
+			return lessString(isAsc, files[i].Type, files[j].Type)
 		})
 	} else if s == "size" {
 		sort.SliceStable(files, func(i, j int) bool {
@@ -130,10 +158,10 @@ func SortFiles(files []Item, s string, o string) []Item {
 }
 
 func GetLocalPath(url string) string {
-	if !strings.HasPrefix(url, HOMEURL) {
-		return path.Join(HOMEDIR, url)
+	if !strings.HasPrefix(url, HOME_URL) {
+		return path.Join(HOME_DIR, url)
 	}
-	return HOMEDIR + url[len(HOMEURL):]
+	return HOME_DIR + url[len(HOME_URL):]
 }
 
 func GetRefererPath(c *gin.Context) (string, error) {
@@ -178,37 +206,7 @@ func ParseNavList(navpath string, query string) []Nav {
 	return result
 }
 
-func InitDir(runDir string) {
-	logdir := path.Join(runDir, "log")
-	if !util.PathExists(logdir) {
-		if err := os.MkdirAll(logdir, os.ModePerm); err != nil {
-			panic(err)
-		}
-	}
-
-	logfile, err := os.OpenFile(path.Join(logdir, "logrus.log"), os.O_CREATE|os.O_WRONLY, 0666)
-	if err != nil {
-		panic(logfile)
-	}
-
-	log.SetOutput(logfile)
-
-	HOMEDIR = path.Join(runDir, HOMEURL)
-	if !util.PathExists(HOMEDIR) {
-		if err := os.MkdirAll(HOMEDIR, os.ModePerm); err != nil {
-			panic(err)
-		}
-	}
-	ARCHIVEDIR = path.Join(runDir, "archive")
-	if !util.PathExists(ARCHIVEDIR) {
-		if err := os.MkdirAll(ARCHIVEDIR, os.ModePerm); err != nil {
-			panic(err)
-		}
-	}
-}
-
 //////////////////////////////////////
-
 type Handler struct {
 	app *gin.Engine
 }
@@ -243,17 +241,17 @@ func (handler Handler) Home(c *gin.Context) {
 		return
 	}
 	urlPath := urlInfo.Path
-	localPath := path.Join(HOMEDIR, urlPath)
+	localPath := path.Join(HOME_DIR, urlPath)
 	log.Info("url path:", urlPath)
 	if util.IsDir(localPath) {
-		navPath := path.Join(HOMEURL, urlPath)
-		itemList := ReadDir(localPath, navPath, c.Request.URL.RawQuery)
-		SortFiles(itemList, c.Query("s"), c.Query("o"))
-		navList := ParseNavList(navPath, c.Request.URL.RawQuery)
+		fullUrl := path.Join(HOME_URL, urlPath)
+		RowItemList := ReadDirFromUrlPath(urlPath, c.Request.URL.RawQuery)
+		SortFiles(RowItemList, c.Query("s"), c.Query("o"))
+		navList := ParseNavList(fullUrl, c.Request.URL.RawQuery)
 		data := gin.H{
 			"title": urlPath,
 			"dir":   urlPath,
-			"list":  itemList,
+			"list":  RowItemList,
 			"nav":   navList,
 		}
 		c.HTML(http.StatusOK, "index.html", data)
@@ -273,7 +271,7 @@ func (handler Handler) ErrorRender(title string, message string, c *gin.Context)
 	if err != nil {
 		title = "Referer Path Error"
 		message = err.Error()
-		backUrl = HOMEURL
+		backUrl = HOME_URL
 	}
 
 	c.HTML(http.StatusInternalServerError, "error.html", gin.H{
@@ -429,7 +427,7 @@ func (handler Handler) Archive(c *gin.Context) {
 		return
 	}
 
-	zippath := path.Join(ARCHIVEDIR, uniqueName+"_"+name)
+	zippath := path.Join(ARCHIVE_DIR, uniqueName+"_"+name)
 	cmdstr := fmt.Sprintf("cd %s && zip -r %s %s", zipdir, zippath, strings.Join(paramsList, " "))
 	log.Info("shell command:", cmdstr)
 	cmd := exec.Command("/bin/bash", "-c", cmdstr)
