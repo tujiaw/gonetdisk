@@ -10,10 +10,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func init() {
-
-}
-
 func main() {
 	InitDir(os.Args[0])
 	configPath := path.Join(filepath.Dir(os.Args[0]), "config/config.json")

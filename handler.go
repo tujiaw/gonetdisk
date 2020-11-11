@@ -195,6 +195,7 @@ func InitDir(arg0 string) {
 	if err != nil {
 		panic(logfile)
 	}
+
 	log.SetOutput(logfile)
 
 	HOMEDIR = path.Join(runDir, HOMEURL)
@@ -209,13 +210,6 @@ func InitDir(arg0 string) {
 			panic(err)
 		}
 	}
-}
-
-func Alert(title string, message string) map[string]string {
-	var mp = make(map[string]string)
-	mp["title"] = title
-	mp["message"] = message
-	return mp
 }
 
 //////////////////////////////////////
