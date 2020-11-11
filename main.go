@@ -43,7 +43,7 @@ func main() {
 	app.POST("/move", handler.Move)
 	app.POST("/archive", handler.Archive)
 
-	const PORT = ":8989"
+	const PORT = ":5683"
 	log.Info("app start listen port", PORT)
 	if err := app.Run(PORT); err != nil {
 		panic(err)
