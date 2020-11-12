@@ -155,7 +155,7 @@ $("#filter").bind("input propertychange", function () {
 $("#archive").click(function () {
   $("#pathlist").val(JSON.stringify(getSelectFiles()));
   $("#archiveInput").val(
-    "files_ningto_" + new Date().Format("yyyMMdd_HHmmss") + ".zip"
+    "files_ningto_" + new Date().Format("yyyyMMdd_HHmmss") + ".zip"
   );
   return true;
 });

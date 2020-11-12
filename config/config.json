@@ -36,5 +36,12 @@
     { "ext": ".html", "name": "源代码"},
     { "ext": ".css", "name": "源代码"},
     { "ext": ".java", "name": "源代码"}
-  ]
+  ],
+  "preview": {
+    "limit": 5000000,
+    "list": [
+      ".doc", ".docx", ".rtf", ".xls", "xlsx", ".ppt", ".pptx", ".pdf", ".zip", ".rar", ".7z", ".wps", 
+      ".txt", ".js", ".json", ".css", ".sql", ".xml", ".java", ".cs"
+    ]
+  }
 }

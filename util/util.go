@@ -75,3 +75,12 @@ func IfBool(yes bool, left bool, right bool) bool {
 	}
 	return right
 }
+
+func StringsIndex(list []string, str string) int {
+	for i, s := range list {
+		if s == str {
+			return i
+		}
+	}
+	return -1
+}

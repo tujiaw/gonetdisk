@@ -19,11 +19,18 @@ type JsonInfo struct {
 		Ext  string `json:"ext"`
 		Name string `json:"name"`
 	} `json:"extname"`
+
+	Preview struct {
+		Limit int64    `json:"limit"`
+		List  []string `json:"list"`
+	} `json:"preview"`
 }
 
 type Info struct {
-	extName  map[string]string
-	nameIcon map[string]string
+	extName      map[string]string
+	nameIcon     map[string]string
+	previewLimit int64
+	previewList  []string
 }
 
 var instance *Info
@@ -56,6 +63,8 @@ func (info *Info) Init(pathstr string) error {
 	for _, item := range jsonInfo.NameIcon {
 		info.nameIcon[item.Name] = item.Icon
 	}
+	info.previewLimit = jsonInfo.Preview.Limit
+	info.previewList = jsonInfo.Preview.List
 	return nil
 }
 
@@ -81,4 +90,15 @@ func (info *Info) GetNameAndIcon(pathstr string) (string, string) {
 		name = info.Name(filepath.Ext(pathstr))
 	}
 	return name, info.Icon(name)
+}
+
+// http://ow365.cn/?i=23123&furl=文件地址
+func (info *Info) EnablePreview(ext string, bsize int64) bool {
+	if bsize < info.previewLimit {
+		ext = strings.ToLower(ext)
+		if i := util.StringsIndex(info.previewList, ext); i >= 0 {
+			return true
+		}
+	}
+	return false
 }

@@ -34,14 +34,15 @@ type Nav struct {
 }
 
 type RowItem struct {
-	Type    string
-	Icon    string
-	Name    string
-	Href    string
-	IsDir   bool
-	BSize   util.ByteSize
-	Size    string
-	ModTime string
+	Type          string
+	Icon          string
+	Name          string
+	Href          string
+	IsDir         bool
+	BSize         util.ByteSize
+	Size          string
+	ModTime       string
+	EnablePreview bool
 }
 
 func InitDir(runDir string) {
@@ -97,16 +98,19 @@ func ReadDirFromUrlPath(urlpath string, query string) []RowItem {
 			size = bsize.Format()
 		}
 
-		name, icon := config.Instance().GetNameAndIcon(path.Join(localDir, fi[i].Name()))
+		localPath := path.Join(localDir, fi[i].Name())
+		name, icon := config.Instance().GetNameAndIcon(localPath)
+		ext := filepath.Ext(localPath)
 		result = append(result, RowItem{
-			Type:    name,
-			Icon:    icon,
-			Name:    fi[i].Name(),
-			Href:    href,
-			IsDir:   isDir,
-			BSize:   bsize,
-			Size:    size,
-			ModTime: fi[i].ModTime().Format("2006-01-02 15:04:05"),
+			Type:          name,
+			Icon:          icon,
+			Name:          fi[i].Name(),
+			Href:          href,
+			IsDir:         isDir,
+			BSize:         bsize,
+			Size:          size,
+			ModTime:       fi[i].ModTime().Format("2006-01-02 15:04:05"),
+			EnablePreview: config.Instance().EnablePreview(ext, fi[i].Size()),
 		})
 	}
 	return result
