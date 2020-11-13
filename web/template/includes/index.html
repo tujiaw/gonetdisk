@@ -44,8 +44,13 @@
         {{ range .list }}
         <tr class="file-row">
           <td style="width:30px;"><input type="checkbox" class="select" value="{{ .Name }}" /></td>
-          <td><i class="fa fa-fw {{ .Icon }}" isdir="{{ .IsDir }}"></i> <a class="filename"
-              href="{{ .Href }}">{{ .Name }}</a></td>
+          <td>
+            <i class="fa fa-fw {{ .Icon }}" isdir="{{ .IsDir }}"></i> 
+            <a class="filename" href="{{ .Href }}">{{ .Name }}</a>
+            {{ if .PreviewUrl }}
+              <a class="preview" href="{{ .PreviewUrl }}" target="_blank"><i class="fa fa-fw fa-eye"></i></a>
+            {{ end }}
+          </td>
           <td>{{ .ModTime }}</td>
           <td>{{ .Type }}</td>
           <td style="text-align: left;">{{ .Size }}</td>

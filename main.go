@@ -79,6 +79,9 @@ func LoadTemplates(templatesDir string) multitemplate.Renderer {
 		"StringToLower": func(str string) string {
 			return strings.ToLower(str)
 		},
+		"StringLength": func(str string) int {
+			return len(str)
+		},
 	}
 
 	for _, include := range includes {

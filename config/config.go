@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"gonetdisk/util"
 	"io/ioutil"
 	"path/filepath"
@@ -92,7 +93,6 @@ func (info *Info) GetNameAndIcon(pathstr string) (string, string) {
 	return name, info.Icon(name)
 }
 
-// http://ow365.cn/?i=23123&furl=文件地址
 func (info *Info) EnablePreview(ext string, bsize int64) bool {
 	if bsize < info.previewLimit {
 		ext = strings.ToLower(ext)
@@ -101,4 +101,11 @@ func (info *Info) EnablePreview(ext string, bsize int64) bool {
 		}
 	}
 	return false
+}
+
+func (info *Info) PreviewUrl(ext string, bsize int64, url string) string {
+	if info.EnablePreview(ext, bsize) {
+		return fmt.Sprintf("http://ow365.cn/?i=23123&furl=http://f.ningto.com%s", url)
+	}
+	return ""
 }
