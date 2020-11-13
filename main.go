@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"gonetdisk/config"
 	"html/template"
 	"os"
@@ -19,13 +20,18 @@ func main() {
 		panic(err)
 	}
 
-	InitDir(runDir)
+	var homeDir string
+	flag.StringVar(&homeDir, "d", path.Join(runDir, HOME_URL), "home dir")
+	flag.Parse()
+
+	InitLog(runDir)
+	log.Info("====== start gonetdisk ======")
+	InitDir(runDir, homeDir)
+
 	configPath := path.Join(runDir, "config/config.json")
 	if err := config.Instance().Init(configPath); err != nil {
 		panic(err)
 	}
-
-	log.Info("start home dir:", HOME_DIR)
 
 	app := gin.Default()
 	handler := NewHandler(app)

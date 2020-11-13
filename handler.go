@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"gonetdisk/config"
 	"gonetdisk/util"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -52,7 +54,8 @@ type RowItem struct {
 	PreviewUrl string
 }
 
-func InitDir(runDir string) {
+func InitLog(runDir string) {
+	log.SetFormatter(&log.TextFormatter{})
 	logdir := path.Join(runDir, "log")
 	if !util.PathExists(logdir) {
 		if err := os.MkdirAll(logdir, os.ModePerm); err != nil {
@@ -65,22 +68,45 @@ func InitDir(runDir string) {
 		panic(logfile)
 	}
 
-	log.SetOutput(logfile)
+	log.SetOutput(io.MultiWriter([]io.Writer{logfile, os.Stdout}...))
+}
 
-	createDirNoExist := func(dir string) {
+func InitDir(runDir, homeDir string) {
+	// 检查目录，规范目录格式
+	checkDir := func(dir string, isCreate bool) string {
 		if !util.PathExists(dir) {
-			if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+			var err error
+			if isCreate {
+				err = os.MkdirAll(dir, os.ModePerm)
+			} else {
+				err = errors.New("Dir is not exists!")
+			}
+			if err != nil {
 				panic(err)
 			}
 		}
+
+		dir, err := filepath.Abs(dir)
+		if err != nil {
+			panic(err)
+		}
+		return dir
 	}
 
-	HOME_DIR = path.Join(runDir, HOME_URL)
-	ARCHIVE_DIR = path.Join(runDir, "archive")
-	TRASH_DIR = path.Join(runDir, "trash")
-	createDirNoExist(HOME_DIR)
-	createDirNoExist(ARCHIVE_DIR)
-	createDirNoExist(TRASH_DIR)
+	runDir = checkDir(runDir, false)
+	HOME_DIR = checkDir(homeDir, false)
+	ARCHIVE_DIR = checkDir(path.Join(runDir, "archive"), true)
+	TRASH_DIR = checkDir(path.Join(runDir, "trash"), true)
+
+	log.Info("run dir:", runDir)
+	log.Info("home dir:", HOME_DIR)
+	log.Info("archive dir:", ARCHIVE_DIR)
+	log.Info("trash dir:", TRASH_DIR)
+
+	// home目录不能包含运行目录
+	if strings.Index(strings.ToLower(runDir), strings.ToLower(HOME_DIR)) >= 0 {
+		panic(errors.New("Home dir conflict"))
+	}
 }
 
 func ReadDirFromUrlPath(urlpath string, query string) []RowItem {
