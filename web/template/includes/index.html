@@ -48,7 +48,7 @@
             <i class="fa fa-fw {{ .Icon }}" isdir="{{ .IsDir }}"></i> 
             <a class="filename" href="{{ .Href }}">{{ .Name }}</a>
             {{ if .PreviewUrl }}
-              <a class="preview" href="{{ .PreviewUrl }}" target="_blank"><i class="fa fa-fw fa-eye"></i></a>
+              <a class="preview" href="{{ .PreviewUrl }}" title="preview" target="_blank" style="color:black;"><i class="fa fa-fw fa-eye"></i></a>
             {{ end }}
           </td>
           <td>{{ .ModTime }}</td>
