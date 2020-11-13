@@ -20,9 +20,16 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// 本地根目录
-var HOME_DIR string
-var ARCHIVE_DIR string
+var (
+	// 本地文件浏览目录
+	HOME_DIR string
+
+	// 打包下载目录
+	ARCHIVE_DIR string
+
+	// 删除文件目录
+	TRASH_DIR string
+)
 
 // URL路径
 const HOME_URL = "/home"
@@ -60,18 +67,20 @@ func InitDir(runDir string) {
 
 	log.SetOutput(logfile)
 
+	createDirNoExist := func(dir string) {
+		if !util.PathExists(dir) {
+			if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+				panic(err)
+			}
+		}
+	}
+
 	HOME_DIR = path.Join(runDir, HOME_URL)
-	if !util.PathExists(HOME_DIR) {
-		if err := os.MkdirAll(HOME_DIR, os.ModePerm); err != nil {
-			panic(err)
-		}
-	}
 	ARCHIVE_DIR = path.Join(runDir, "archive")
-	if !util.PathExists(ARCHIVE_DIR) {
-		if err := os.MkdirAll(ARCHIVE_DIR, os.ModePerm); err != nil {
-			panic(err)
-		}
-	}
+	TRASH_DIR = path.Join(runDir, "trash")
+	createDirNoExist(HOME_DIR)
+	createDirNoExist(ARCHIVE_DIR)
+	createDirNoExist(TRASH_DIR)
 }
 
 func ReadDirFromUrlPath(urlpath string, query string) []RowItem {
@@ -309,9 +318,21 @@ func (handler Handler) Delete(c *gin.Context) {
 			localPath = escapePath
 		}
 
-		if err = os.RemoveAll(localPath); err != nil {
-			log.Error("remove file, name:", f, ", err:", err)
+		uuid, err := util.Uuidv4()
+		if err != nil {
+			log.Error("uuidv4 error:", err)
+			continue
 		}
+
+		// 移到垃圾箱中
+		trashPath := path.Join(TRASH_DIR, uuid+"_"+filepath.Base(localPath))
+		if err := os.Rename(localPath, trashPath); err != nil {
+			log.Error("rename file, from:", localPath, ", to:", trashPath, ", err:", err)
+		}
+		// 直接删除
+		// if err = os.RemoveAll(localPath); err != nil {
+		// 	log.Error("remove file, name:", f, ", err:", err)
+		// }
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"err": 0,

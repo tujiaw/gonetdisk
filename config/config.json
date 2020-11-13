@@ -1,6 +1,6 @@
 {
   "nameicon" : [
-    { "name" : "目录", "icon" : "fa-folder-o" },
+    { "name" : "目录", "icon" : "fa-folder" },
     { "name": "文件", "icon": "fa-file-o" },
     { "name": "应用程序", "icon": "fa-file-o" },
     { "name": "图片", "icon": "fa-file-image-o" },
