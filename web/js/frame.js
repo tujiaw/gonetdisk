@@ -98,7 +98,7 @@ $("#delete").click(function () {
     return;
   }
   const selectFiles = getSelectFiles();
-  fetch("/delete", {
+  fetch("/admin/delete", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
