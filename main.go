@@ -36,6 +36,10 @@ func main() {
 	app := gin.Default()
 	handler := NewHandler(app)
 
+	admin := app.Group("/admin", gin.BasicAuth(gin.Accounts{
+		"admin": "admin",
+	}))
+
 	app.HTMLRender = LoadTemplates(path.Join(runDir, "web/template"))
 	app.Static("/web", "web")
 
@@ -43,13 +47,11 @@ func main() {
 	app.NoRoute(handler.NoRoute)
 	app.GET("/home/*path", handler.Home)
 	app.GET("/404", handler.NoRoute)
-	app.POST("/delete", handler.Delete)
-	app.POST("/new", handler.New)
 	app.POST("/upload", handler.Upload)
-	app.POST("/move", handler.Move)
 	app.POST("/archive", handler.Archive)
-	app.POST("/wxmessage", handler.WXMessage)
-	app.POST("/wxupload", handler.WXUpload)
+	app.POST("/new", handler.New)
+	admin.POST("/delete", handler.Delete)
+	admin.POST("/move", handler.Move)
 
 	const PORT = ":5683"
 	log.Info("app start listen port", PORT)
