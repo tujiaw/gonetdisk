@@ -48,6 +48,8 @@ func main() {
 	app.POST("/upload", handler.Upload)
 	app.POST("/move", handler.Move)
 	app.POST("/archive", handler.Archive)
+	app.POST("/wxmessage", handler.WXMessage)
+	app.POST("/wxupload", handler.WXUpload)
 
 	const PORT = ":5683"
 	log.Info("app start listen port", PORT)

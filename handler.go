@@ -79,7 +79,7 @@ func InitDir(runDir, homeDir string) {
 			if isCreate {
 				err = os.MkdirAll(dir, os.ModePerm)
 			} else {
-				err = errors.New("Dir is not exists!")
+				err = fmt.Errorf("dir not exist, path:%v", dir)
 			}
 			if err != nil {
 				panic(err)
@@ -94,7 +94,7 @@ func InitDir(runDir, homeDir string) {
 	}
 
 	runDir = checkDir(runDir, false)
-	HOME_DIR = checkDir(homeDir, false)
+	HOME_DIR = checkDir(homeDir, true)
 	ARCHIVE_DIR = checkDir(path.Join(runDir, "archive"), true)
 	TRASH_DIR = checkDir(path.Join(runDir, "trash"), true)
 
@@ -494,4 +494,76 @@ func (handler Handler) Archive(c *gin.Context) {
 	}
 
 	c.FileAttachment(zippath, name)
+}
+
+///////////////////////////////////////////////////////
+type WXMessage struct {
+	Type    int64  `json:"type"`
+	Self    int64  `json:"self"`
+	Wxid1   string `json:"wxid1"`
+	Wxid2   string `json:"wxid2"`
+	Head    string `json:"head"`
+	Content string `json:"content"`
+}
+
+type WXTextMessage struct {
+	WXMessage
+}
+
+type WXFileMessage struct {
+	WXMessage
+	Md5  string `json:"md5"`
+	Name string `json:"name"`
+	Path string `json:"path"`
+}
+
+func (handler Handler) WXMessage(c *gin.Context) {
+	b, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		fmt.Println("read request body error:", err)
+	}
+
+	var msg WXMessage
+	if err := json.Unmarshal(b, &msg); err != nil {
+		fmt.Println("json unmarshal msg error:", err)
+	}
+
+	fmt.Println(msg)
+	c.JSON(http.StatusOK, gin.H{
+		"error": 0,
+	})
+}
+
+func (handler Handler) WXUpload(c *gin.Context) {
+	c.Request.ParseMultipartForm(10 * 1024 * 1024)
+	file, err := c.FormFile("uploadfile")
+	if err != nil {
+		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	fileInfo := c.Request.FormValue("fileinfo")
+	var msg WXFileMessage
+	if err := json.Unmarshal([]byte(fileInfo), &msg); err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println(msg)
+	}
+
+	dstFile := path.Join("./", filepath.Base(file.Filename))
+	fmt.Println("save file:", dstFile)
+	if err := c.SaveUploadedFile(file, dstFile); err != nil {
+		fmt.Println("save file error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"error": 0,
+	})
 }
