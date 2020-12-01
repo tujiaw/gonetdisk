@@ -17,6 +17,9 @@ body {
   overflow-y: hidden;
 }
 
+main {
+  margin-top: 10px;
+}
 .table-header-item label {
   cursor: pointer;
   margin: 0px;
@@ -52,4 +55,25 @@ body {
 
 .alert {
   margin-bottom: 0px;
+}
+
+.header-logo {
+  font-weight: bold;
+}
+
+.text-dark {
+  color: #343a40!important;
+}
+
+a.text-dark:focus, a.text-dark:hover {
+  color: #121416!important;
+}
+
+.text-muted {
+  color: #6c757d!important;
+}
+
+.navbar-expand-md .navbar-nav .nav-link {
+  padding-right: .5rem;
+  padding-left: 0rem;
 }
