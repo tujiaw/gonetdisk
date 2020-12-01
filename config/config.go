@@ -25,6 +25,9 @@ type JsonInfo struct {
 		Limit int64    `json:"limit"`
 		List  []string `json:"list"`
 	} `json:"preview"`
+
+	Address string `json:"address"`
+	Passwd  string `json:"passwd"`
 }
 
 type Info struct {
@@ -32,6 +35,8 @@ type Info struct {
 	nameIcon     map[string]string
 	previewLimit int64
 	previewList  []string
+	address      string
+	passwd       string
 }
 
 var instance *Info
@@ -66,6 +71,8 @@ func (info *Info) Init(pathstr string) error {
 	}
 	info.previewLimit = jsonInfo.Preview.Limit
 	info.previewList = jsonInfo.Preview.List
+	info.address = jsonInfo.Address
+	info.passwd = jsonInfo.Passwd
 	return nil
 }
 
@@ -108,4 +115,12 @@ func (info *Info) PreviewUrl(ext string, bsize int64, url string) string {
 		return fmt.Sprintf("http://ow365.cn/?i=23123&furl=http://f.ningto.com%s", url)
 	}
 	return ""
+}
+
+func (info *Info) Address() string {
+	return info.address
+}
+
+func (info *Info) Passwd() string {
+	return info.passwd
 }

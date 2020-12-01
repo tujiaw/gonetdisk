@@ -37,7 +37,7 @@ func main() {
 	handler := NewHandler(app)
 
 	admin := app.Group("/admin", gin.BasicAuth(gin.Accounts{
-		"admin": "admin",
+		"admin": config.Instance().Passwd(),
 	}))
 
 	app.HTMLRender = LoadTemplates(path.Join(runDir, "web/template"))
@@ -53,7 +53,7 @@ func main() {
 	admin.POST("/delete", handler.Delete)
 	admin.POST("/move", handler.Move)
 
-	const PORT = ":5683"
+	PORT := config.Instance().Address()
 	log.Info("app start listen port", PORT)
 	if err := app.Run(PORT); err != nil {
 		panic(err)

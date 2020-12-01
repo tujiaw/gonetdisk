@@ -43,5 +43,7 @@
       ".doc", ".docx", ".rtf", ".xls", "xlsx", ".ppt", ".pptx", ".pdf", ".zip", ".rar", ".7z", ".wps", 
       ".txt", ".js", ".json", ".css", ".sql", ".xml", ".java", ".cs"
     ]
-  }
+  },
+  "address": ":7788",
+  "passwd": "ningto"
 }
