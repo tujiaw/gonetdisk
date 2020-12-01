@@ -79,7 +79,7 @@ func InitDir(runDir, homeDir string) {
 			if isCreate {
 				err = os.MkdirAll(dir, os.ModePerm)
 			} else {
-				err = errors.New("Dir is not exists!")
+				err = fmt.Errorf("dir not exist, path:%v", dir)
 			}
 			if err != nil {
 				panic(err)
@@ -94,7 +94,7 @@ func InitDir(runDir, homeDir string) {
 	}
 
 	runDir = checkDir(runDir, false)
-	HOME_DIR = checkDir(homeDir, false)
+	HOME_DIR = checkDir(homeDir, true)
 	ARCHIVE_DIR = checkDir(path.Join(runDir, "archive"), true)
 	TRASH_DIR = checkDir(path.Join(runDir, "trash"), true)
 
