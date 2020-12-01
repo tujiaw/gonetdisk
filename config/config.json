@@ -2,7 +2,7 @@
   "nameicon" : [
     { "name" : "目录", "icon" : "fa-folder" },
     { "name": "文件", "icon": "fa-file-o" },
-    { "name": "应用程序", "icon": "fa-file-o" },
+    { "name": "应用程序", "icon": "fa-file-excel-o" },
     { "name": "图片", "icon": "fa-file-image-o" },
     { "name": "压缩文件", "icon": "fa-file-archive-o" },
     { "name": "PDF文档", "icon": "fa-file-pdf-o" },
