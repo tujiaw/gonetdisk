@@ -367,14 +367,8 @@ func (handler Handler) Delete(c *gin.Context) {
 	}
 
 	for _, localPath := range localPathList {
-		uuid, err := util.Uuidv4()
-		if err != nil {
-			log.Error("uuidv4 error:", err)
-			continue
-		}
-
 		// 移到垃圾箱中
-		trashPath := path.Join(TRASH_DIR, uuid+"_"+filepath.Base(localPath))
+		trashPath := path.Join(TRASH_DIR, time.Now().Format("20060102150405")+"_"+filepath.Base(localPath))
 		if err := os.Rename(localPath, trashPath); err != nil {
 			log.Error("rename file, from:", localPath, ", to:", trashPath, ", err:", err)
 		}
