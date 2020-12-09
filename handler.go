@@ -206,6 +206,9 @@ func GetLocalPath(url string) string {
 func GetRefererPath(c *gin.Context) (string, error) {
 	referer := c.Request.Referer()
 	urlInfo, err := url.Parse(referer)
+	if err == nil && len(referer) == 0 {
+		err = errors.New("referrer is empty!")
+	}
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
 		return "", err
@@ -325,6 +328,12 @@ func (handler Handler) NoRoute(c *gin.Context) {
 }
 
 func (handler Handler) Delete(c *gin.Context) {
+	// force允许删除非空目录
+	force := false
+	if c.Query("force") == "true" {
+		force = true
+	}
+
 	b, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
 		handler.ErrorRender("Error", err.Error(), c)
@@ -338,12 +347,26 @@ func (handler Handler) Delete(c *gin.Context) {
 		return
 	}
 
+	localPathList := make([]string, 0, len(files))
+	enableCount := 0
 	for _, f := range files {
 		localPath := GetLocalPath(f)
 		if escapePath, err := url.QueryUnescape(localPath); err == nil {
 			localPath = escapePath
 		}
+		// 文件或者空目录才允许直接删除
+		if !util.IsDir(localPath) || util.IsPathEmpty(localPath) {
+			enableCount += 1
+		}
+		localPathList = append(localPathList, localPath)
+	}
 
+	if !force && enableCount != len(files) {
+		c.JSON(http.StatusOK, gin.H{"err": "Directory is not empty, continue?"})
+		return
+	}
+
+	for _, localPath := range localPathList {
 		uuid, err := util.Uuidv4()
 		if err != nil {
 			log.Error("uuidv4 error:", err)

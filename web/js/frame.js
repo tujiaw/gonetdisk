@@ -93,22 +93,43 @@ $("#download").click(function () {
   });
 });
 
+function forceDelete(data) {
+  fetch("/admin/delete?force=true", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: data,
+  })
+  .then((response) => response.json())
+  .then(function (response) {
+    if (response.err) {
+      alert(response.err)
+    } else {
+      location.reload();
+    }
+  })
+  .catch(function (err) {
+    alert(err);
+  });
+}
+
 $("#delete").click(function () {
-  if (!confirm("确定要删除选中的文件吗？")) {
-    return;
-  }
   const selectFiles = getSelectFiles();
+  const data = JSON.stringify(selectFiles)
   fetch("/admin/delete", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(selectFiles),
+      body: data,
     })
     .then((response) => response.json())
     .then(function (response) {
       if (response.err) {
-        alert(response.err);
+        if (confirm(response.err)) {
+          forceDelete(data)
+        }
       } else {
         location.reload();
       }

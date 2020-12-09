@@ -3,6 +3,7 @@ package util
 import (
 	"crypto/rand"
 	"fmt"
+	"io"
 	"os"
 )
 
@@ -83,4 +84,18 @@ func StringsIndex(list []string, str string) int {
 		}
 	}
 	return -1
+}
+
+func IsPathEmpty(name string) bool {
+	f, err := os.Open(name)
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+
+	_, err = f.Readdirnames(1)
+	if err == io.EOF {
+		return true
+	}
+	return false
 }
