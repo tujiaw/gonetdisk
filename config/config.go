@@ -3,11 +3,12 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"gonetdisk/util"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/tujiaw/goutil"
 )
 
 type JsonInfo struct {
@@ -92,7 +93,7 @@ func (info *Info) Icon(name string) string {
 
 func (info *Info) GetNameAndIcon(pathstr string) (string, string) {
 	var name string
-	if util.IsDir(pathstr) {
+	if goutil.IsDir(pathstr) {
 		name = "目录"
 	} else {
 		name = info.Name(filepath.Ext(pathstr))
@@ -103,7 +104,7 @@ func (info *Info) GetNameAndIcon(pathstr string) (string, string) {
 func (info *Info) EnablePreview(ext string, bsize int64) bool {
 	if bsize < info.previewLimit {
 		ext = strings.ToLower(ext)
-		if i := util.StringsIndex(info.previewList, ext); i >= 0 {
+		if i := goutil.StringsIndexOf(info.previewList, ext); i >= 0 {
 			return true
 		}
 	}

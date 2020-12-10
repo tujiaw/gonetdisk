@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"gonetdisk/config"
-	"gonetdisk/util"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -20,6 +19,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
+	"github.com/tujiaw/goutil"
 )
 
 var (
@@ -48,7 +48,7 @@ type RowItem struct {
 	Name       string
 	Href       string
 	IsDir      bool
-	BSize      util.ByteSize
+	BSize      goutil.ByteSize
 	Size       string
 	ModTime    string
 	PreviewUrl string
@@ -57,7 +57,7 @@ type RowItem struct {
 func InitLog(runDir string) {
 	log.SetFormatter(&log.TextFormatter{})
 	logdir := path.Join(runDir, "log")
-	if !util.PathExists(logdir) {
+	if !goutil.FileExists(logdir) {
 		if err := os.MkdirAll(logdir, os.ModePerm); err != nil {
 			panic(err)
 		}
@@ -74,7 +74,7 @@ func InitLog(runDir string) {
 func InitDir(runDir, homeDir string) {
 	// 检查目录，规范目录格式
 	checkDir := func(dir string, isCreate bool) string {
-		if !util.PathExists(dir) {
+		if !goutil.FileExists(dir) {
 			var err error
 			if isCreate {
 				err = os.MkdirAll(dir, os.ModePerm)
@@ -121,7 +121,7 @@ func ReadDirFromUrlPath(urlpath string, query string) []RowItem {
 
 	for i := range fi {
 		size := "--"
-		bsize := util.ByteSize(fi[i].Size())
+		bsize := goutil.ByteSize(fi[i].Size())
 		href := path.Join(fullUrl, fi[i].Name())
 
 		isDir := fi[i].IsDir()
@@ -218,7 +218,7 @@ func GetRefererPath(c *gin.Context) (string, error) {
 
 func GetUniquePath(pathstr string) string {
 	for {
-		if !util.PathExists(pathstr) {
+		if !goutil.FileExists(pathstr) {
 			return pathstr
 		}
 
@@ -285,7 +285,7 @@ func (handler Handler) Home(c *gin.Context) {
 	urlPath := urlInfo.Path
 	localPath := path.Join(HOME_DIR, urlPath)
 	log.Info("url path:", urlPath)
-	if util.IsDir(localPath) {
+	if goutil.IsDir(localPath) {
 		fullUrl := path.Join(HOME_URL, urlPath)
 		RowItemList := ReadDirFromUrlPath(urlPath, c.Request.URL.RawQuery)
 		SortFiles(RowItemList, c.Query("s"), c.Query("o"))
@@ -300,7 +300,7 @@ func (handler Handler) Home(c *gin.Context) {
 		return
 	}
 
-	if !util.PathExists(localPath) {
+	if !goutil.FileExists(localPath) {
 		handler.RedirectContext("/404", c)
 		return
 	}
@@ -355,7 +355,7 @@ func (handler Handler) Delete(c *gin.Context) {
 			localPath = escapePath
 		}
 		// 文件或者空目录才允许直接删除
-		if !util.IsDir(localPath) || util.IsPathEmpty(localPath) {
+		if !goutil.IsDir(localPath) || goutil.IsPathEmpty(localPath) {
 			enableCount += 1
 		}
 		localPathList = append(localPathList, localPath)
@@ -447,7 +447,7 @@ func (handler Handler) Move(c *gin.Context) {
 
 	dstpath = GetLocalPath(dstpath)
 	dstdir := filepath.Dir(dstpath)
-	if !util.PathExists(dstdir) {
+	if !goutil.FileExists(dstdir) {
 		if err := os.MkdirAll(dstdir, os.ModePerm); err != nil {
 			handler.ErrorRender("ERROR", err.Error(), c)
 			return
@@ -483,7 +483,7 @@ func (handler Handler) Archive(c *gin.Context) {
 	for _, pathstr := range pathlist {
 		if escapePath, err := url.QueryUnescape(pathstr); err == nil {
 			localpath := GetLocalPath(escapePath)
-			if util.PathExists(localpath) {
+			if goutil.FileExists(localpath) {
 				name := filepath.Base(localpath)
 				if len(zipdir) == 0 {
 					zipdir = filepath.Dir(localpath)
@@ -493,7 +493,7 @@ func (handler Handler) Archive(c *gin.Context) {
 		}
 	}
 
-	uniqueName, err := util.Uuidv4()
+	uniqueName, err := goutil.Uuidv4()
 	if err != nil {
 		handler.ErrorRender("ERROR UUID", err.Error(), c)
 		return
