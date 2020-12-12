@@ -109,14 +109,15 @@ func InitDir(runDir, homeDir string) {
 	}
 }
 
-func ReadDirFromUrlPath(urlpath string, query string) []RowItem {
+func ReadDirFromUrlPath(urlpath string, query string) ([]RowItem, bool) {
 	localDir := path.Join(HOME_DIR, urlpath)
 	fullUrl := path.Join(HOME_URL, urlpath)
 
 	var result []RowItem
+	var hasMusic bool
 	fi, err := ioutil.ReadDir(localDir)
 	if err != nil {
-		return result
+		return result, hasMusic
 	}
 
 	for i := range fi {
@@ -147,8 +148,11 @@ func ReadDirFromUrlPath(urlpath string, query string) []RowItem {
 			ModTime:    fi[i].ModTime().Format("2006-01-02 15:04:05"),
 			PreviewUrl: config.Instance().PreviewUrl(ext, fi[i].Size(), href),
 		})
+		if !hasMusic && name == "音频" {
+			hasMusic = true
+		}
 	}
-	return result
+	return result, hasMusic
 }
 
 func SortFiles(files []RowItem, s string, o string) []RowItem {
@@ -287,14 +291,15 @@ func (handler Handler) Home(c *gin.Context) {
 	log.Info("url path:", urlPath)
 	if goutil.IsDir(localPath) {
 		fullUrl := path.Join(HOME_URL, urlPath)
-		RowItemList := ReadDirFromUrlPath(urlPath, c.Request.URL.RawQuery)
+		RowItemList, hasMusic := ReadDirFromUrlPath(urlPath, c.Request.URL.RawQuery)
 		SortFiles(RowItemList, c.Query("s"), c.Query("o"))
 		navList := ParseNavList(fullUrl, c.Request.URL.RawQuery)
 		data := gin.H{
-			"title": urlPath,
-			"dir":   urlPath,
-			"list":  RowItemList,
-			"nav":   navList,
+			"title":    urlPath,
+			"dir":      urlPath,
+			"list":     RowItemList,
+			"nav":      navList,
+			"hasmusic": hasMusic,
 		}
 		c.HTML(http.StatusOK, "index.html", data)
 		return

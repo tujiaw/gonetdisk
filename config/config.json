@@ -8,7 +8,8 @@
     { "name": "PDF文档", "icon": "fa-file-pdf-o" },
     { "name": "日志", "icon": "fa-file-text-o" },
     { "name": "文本文件", "icon": "fa-file-text-o" },
-    { "name": "源代码", "icon": "fa-file-code-o" }
+    { "name": "源代码", "icon": "fa-file-code-o" },
+    { "name": "音频", "icon": "fa-file-audio-o" }
   ],
   "extname": [
     { "ext": ".exe", "name": "应用程序" },
@@ -35,7 +36,10 @@
     { "ext": ".js", "name": "源代码"},
     { "ext": ".html", "name": "源代码"},
     { "ext": ".css", "name": "源代码"},
-    { "ext": ".java", "name": "源代码"}
+    { "ext": ".java", "name": "源代码"},
+    { "ext": ".ogg", "name": "音频"},
+    { "ext": ".mp3", "name": "音频"},
+    { "ext": ".wav", "name": "音频"}
   ],
   "preview": {
     "limit": 5000000,

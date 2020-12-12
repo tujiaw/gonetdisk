@@ -245,3 +245,13 @@ $("thead .table-header-item label").click(function () {
       window.location.href.substr(0, pos) + `?s=${type}&o=${order}`;
   }
 });
+
+$('.fa-file-audio-o').click(function() {
+  var mymusic = document.getElementById("mymusic");
+  mymusic.src = $(this).parent().find("a").attr("href")
+  if (mymusic.paused) {
+    mymusic.play();
+  } else {
+    mymusic.pause();
+  }
+})
