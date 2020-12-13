@@ -254,6 +254,7 @@ $('.fa-file-audio-o').click(function() {
     var nextsrc = $(this).parent().parent().next().find("a").attr("href");
     if (nextsrc !== undefined) {
       // nextsrc = $("#file-list-body").first().find("a").attr("href");
+      last_music_src = nextsrc;
       mymusic.src = nextsrc;
       mymusic.play();
     }
