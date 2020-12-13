@@ -246,9 +246,25 @@ $("thead .table-header-item label").click(function () {
   }
 });
 
+var last_music_src = "";
 $('.fa-file-audio-o').click(function() {
   var mymusic = document.getElementById("mymusic");
-  mymusic.src = $(this).parent().find("a").attr("href")
+  mymusic.onended = function() {
+    // 返回到第一首
+    var nextsrc = $(this).parent().parent().next().find("a").attr("href");
+    if (nextsrc !== undefined) {
+      // nextsrc = $("#file-list-body").first().find("a").attr("href");
+      mymusic.src = nextsrc;
+      mymusic.play();
+    }
+  };
+
+  var newsrc = $(this).parent().find("a").attr("href");
+  if (newsrc != last_music_src) {
+    last_music_src = newsrc;
+    mymusic.src = newsrc;
+  }
+
   if (mymusic.paused) {
     mymusic.play();
   } else {

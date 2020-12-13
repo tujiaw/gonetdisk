@@ -43,7 +43,7 @@
               class="fa fa-fw fa-sort"></i></th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="file-list-body">
         {{ range .list }}
         <tr class="file-row">
           <td style="width:30px;"><input type="checkbox" class="select" value="{{ .Name }}" /></td>
